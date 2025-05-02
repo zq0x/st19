@@ -1310,7 +1310,15 @@ def update_gpu_data():
     pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
     pipe.execute()
     gpu_data2 = r.get('gpu_key')
+    print(f'................................................................')
+    print(f'.............gpu_data2..........')
+    print(gpu_data2)
+    print(f'................................................................')
     current_data2 = json.loads(gpu_data2) if gpu_data2 else None
+    print(f'................................................................')
+    print(f'.............current_data2..........')
+    print(current_data2)
+    print(f'................................................................')
     # return "asdf"
     return current_data2
 
