@@ -403,27 +403,105 @@ def docker_api(req_method,req_var):
 
 
 
-def gpu_to_pd():
+# def gpu_to_pd():
+#     global MEM_TOTAL
+#     global MEM_USED
+#     global MEM_FREE
+#     rows = []
+
+#     try:
+#         gpu_list = get_gpu_data()
+#         MEM_TOTAL = 0
+#         MEM_USED = 0
+#         MEM_FREE = 0
+#         for entry in gpu_list:
+#             gpu_info = ast.literal_eval(entry['gpu_info'])
+            
+#             current_gpu_mem_total = gpu_info.get("mem_total", "0")
+#             current_gpu_mem_used = gpu_info.get("mem_used", "0")
+#             current_gpu_mem_free = gpu_info.get("mem_free", "0")
+#             MEM_TOTAL = float(MEM_TOTAL) + float(current_gpu_mem_total.split()[0])
+#             MEM_USED = float(MEM_USED) + float(current_gpu_mem_used.split()[0])
+#             MEM_FREE = float(MEM_FREE) + float(current_gpu_mem_free.split()[0])
+
+            
+#             rows.append({                                
+#                 "name": gpu_info.get("name", "0"),
+#                 "mem_util": gpu_info.get("mem_util", "0"),
+#                 "timestamp": entry.get("timestamp", "0"),
+#                 "fan_speed": gpu_info.get("fan_speed", "0"),
+#                 "temperature": gpu_info.get("temperature", "0"),
+#                 "gpu_util": gpu_info.get("gpu_util", "0"),
+#                 "power_usage": gpu_info.get("power_usage", "0"),
+#                 "clock_info_graphics": gpu_info.get("clock_info_graphics", "0"),
+#                 "clock_info_mem": gpu_info.get("clock_info_mem", "0"),                
+#                 "cuda_cores": gpu_info.get("cuda_cores", "0"),
+#                 "compute_capability": gpu_info.get("compute_capability", "0"),
+#                 "current_uuid": gpu_info.get("current_uuid", "0"),
+#                 "gpu_i": entry.get("gpu_i", "0"),
+#                 "supported": gpu_info.get("supported", "0"),
+#                 "not_supported": gpu_info.get("not_supported", "0"),
+#                 "status": "ok"
+#             })
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         print(f'rows: {rows}')
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         df = pd.DataFrame(rows)
+        
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         print(f'df: {df}')
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+#         return df
+    
+#     except Exception as e:
+#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+
+# gpu_to_pd()
+
+
+
+
+def gpu_to_pd2():
     global MEM_TOTAL
     global MEM_USED
     global MEM_FREE
     rows = []
 
     try:
-        gpu_list = get_gpu_data()
-        MEM_TOTAL = 0
-        MEM_USED = 0
-        MEM_FREE = 0
-        for entry in gpu_list:
-            gpu_info = ast.literal_eval(entry['gpu_info'])
-            
+        data_gpu = get_gpu_info()
+        pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
+        pipe.execute()
+        gpu_data2 = r.get('gpu_key')
+        print(f'................................................................')
+        print(f'.............gpu_data2..........')
+        print(gpu_data2)
+        print(f'................................................................')
+        current_data2 = json.loads(gpu_data2) if gpu_data2 else None
+        print(f'................................................................')
+        print(f'.............current_data2..........')
+        print(current_data2)
+        print(f'................................................................')
+        for entry in current_data2:
+            print(f'................................................................')
+            print("entry")
+            print(entry)
+            print(f'................................................................')
+            gpu_info = entry.copy()
+            print("gpu_info")
+            print(gpu_info)
+            print(f'................................................................')
             current_gpu_mem_total = gpu_info.get("mem_total", "0")
             current_gpu_mem_used = gpu_info.get("mem_used", "0")
             current_gpu_mem_free = gpu_info.get("mem_free", "0")
             MEM_TOTAL = float(MEM_TOTAL) + float(current_gpu_mem_total.split()[0])
             MEM_USED = float(MEM_USED) + float(current_gpu_mem_used.split()[0])
             MEM_FREE = float(MEM_FREE) + float(current_gpu_mem_free.split()[0])
-
+        
+            
             
             rows.append({                                
                 "name": gpu_info.get("name", "0"),
@@ -443,24 +521,26 @@ def gpu_to_pd():
                 "not_supported": gpu_info.get("not_supported", "0"),
                 "status": "ok"
             })
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print(f'rows: {rows}')
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        df = pd.DataFrame(rows)
+            print(f'@@@@2222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            print(f'rows: {rows}')
+            print(f'@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            print(f'@@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            df = pd.DataFrame(rows)
+            
+            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            print(f'df: {df}')
+            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            print(f'@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+            return df
         
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print(f'df: {df}')
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        return df
+        
     
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
 
-gpu_to_pd()
+gpu_to_pd2()
 
 
 
@@ -3429,11 +3509,12 @@ def create_app():
         kekwq = gr.Textbox(label="kekwq")
 
 
-        mhm_timer = gr.Timer(0.1,active=True)
-        mhm_timer.tick(update_gpu_data, outputs=[kekwq])
+        # mhm_timer = gr.Timer(0.1,active=True)
+        # mhm_timer.tick(update_gpu_data, outputs=[kekwq])
         
         gpu_timer = gr.Timer(1,active=True)
-        gpu_timer.tick(gpu_to_pd, outputs=gpu_dataframe)
+        # gpu_timer.tick(gpu_to_pd, outputs=gpu_dataframe)
+        gpu_timer.tick(gpu_to_pd2, outputs=gpu_dataframe)
 
         network_timer = gr.Timer(1,active=True)
         network_timer.tick(network_to_pd, outputs=[network_dataframe,kekw])
