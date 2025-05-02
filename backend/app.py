@@ -18,7 +18,18 @@ import logging
 
 
 # print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
-r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
+# r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
+pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
+r = redis.Redis(connection_pool=pool)
+pipe = r.pipeline()
+
+
+
+
+
+
+
+
 
 LOG_PATH = './logs'
 LOGFILE_CONTAINER = f'{LOG_PATH}/logfile_container_backend.log'
@@ -713,6 +724,24 @@ async def redis_timer_vllm():
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
             await asyncio.sleep(1.0)
 
+async def redis_timer_gpu_new():
+    while True:
+        try:
+
+            data_gpu = get_gpu_info()
+
+
+            pipe.setex('gpu_key', 3600, json.dumps([data_gpu]))
+            pipe.execute()
+            gpu_data2 = r.get('gpu_key')
+            current_data2 = json.loads(gpu_data2) if gpu_data2 else None
+            print(f'€€€€€€€€€€€€€€€€€€€€€€€ND current_data2: {current_data2}')
+
+            await asyncio.sleep(1.0)
+        except Exception as e:
+            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
+            await asyncio.sleep(1.0)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -721,6 +750,7 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(redis_timer_network())
     asyncio.create_task(redis_timer_vllm())
     asyncio.create_task(redis_timer_vllm2())
+    asyncio.create_task(redis_timer_gpu_new())
     yield
 
 app = FastAPI(lifespan=lifespan)
