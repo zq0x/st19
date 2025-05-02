@@ -1126,8 +1126,18 @@ def gpu_to_pd():
                 "not_supported": gpu_info.get("not_supported", "0"),
                 "status": "ok"
             })
+        print('>>>>>>>>>')
+        print("rows")
+        print(rows)
+        print('>>>>>>>>>')
+        
 
         df = pd.DataFrame(rows)
+        
+        print('>>>>>>>>>')
+        print("df")
+        print(df)
+        print('>>>>>>>>>')
         return df
     
     except Exception as e:
