@@ -1126,7 +1126,15 @@ def gpu_to_pd():
                 "not_supported": gpu_info.get("not_supported", "0"),
                 "status": "ok"
             })
+            
+        
+        print('>>>>>>>> loading not default')
+        print("rows")
+        print(rows)
         print('>>>>>>>>>')
+                    
+        rows = [{'name': 'NVIDIA GeForce RTX 3070', 'mem_util': '83.84% (6868.38 MB/8192.00 MB)', 'timestamp': '2025-05-02 07:13:42', 'fan_speed': '0%', 'temperature': '32°C', 'gpu_util': '0%', 'power_usage': '12.98 W', 'clock_info_graphics': '210 MHz', 'clock_info_mem': '405 MHz', 'cuda_cores': '5888', 'compute_capability': '0', 'current_uuid': 'GPU-7e2e0401-9ba4-f5c9-5d47-231a882f1b5f', 'gpu_i': 0, 'supported': '0', 'not_supported': '0', 'status': 'ok'}]
+        print('>>>>>>>> loading default ros >')
         print("rows")
         print(rows)
         print('>>>>>>>>>')
