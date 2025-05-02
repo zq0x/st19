@@ -443,8 +443,18 @@ def gpu_to_pd():
                 "not_supported": gpu_info.get("not_supported", "0"),
                 "status": "ok"
             })
-
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'rows: {rows}')
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
         df = pd.DataFrame(rows)
+        
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'df: {df}')
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
         return df
     
     except Exception as e:
@@ -1297,7 +1307,7 @@ def update_gpu_data():
     data_gpu = get_gpu_info()
 
 
-    pipe.setex('gpu_key', 3600, json.dumps([data_gpu]))
+    pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
     pipe.execute()
     gpu_data2 = r.get('gpu_key')
     current_data2 = json.loads(gpu_data2) if gpu_data2 else None
