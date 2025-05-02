@@ -9,3 +9,4 @@ tqdm
 datasets
 torch
 gitpython
+pynvml
