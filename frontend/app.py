@@ -1254,16 +1254,16 @@ def update_gpu_data():
     return current_data2
 
 
-def update_gpu_data():
+# def update_gpu_data():
 
-    data_gpu = get_gpu_info()
+#     data_gpu = get_gpu_info()
 
 
-    pipe.setex('gpu_key', 3600, json.dumps([data_gpu]))
-    pipe.execute()
-    gpu_data2 = r.get('gpu_key')
-    current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-    return current_data2
+#     pipe.setex('gpu_key', 3600, json.dumps([data_gpu]))
+#     pipe.execute()
+#     gpu_data2 = r.get('gpu_key')
+#     current_data2 = json.loads(gpu_data2) if gpu_data2 else None
+#     return current_data2
 
 
 
@@ -3357,11 +3357,11 @@ def create_app():
 
 
          
-        kekw = gr.Textbox(label="kekw")
+        kekwq = gr.Textbox(label="kekw")
 
 
         mhm_timer = gr.Timer(0.1,active=True)
-        mhm_timer.tick(update_gpu_data, outputs=[kekw])
+        mhm_timer.tick(update_gpu_data, outputs=[kekwq])
         
         # gpu_timer = gr.Timer(1,active=True)
         # gpu_timer.tick(gpu_to_pd, outputs=gpu_dataframe)
