@@ -1251,6 +1251,7 @@ def update_gpu_data():
     pipe.execute()
     gpu_data2 = r.get('gpu_key')
     current_data2 = json.loads(gpu_data2) if gpu_data2 else None
+    return "asdf"
     return current_data2
 
 
@@ -3357,7 +3358,7 @@ def create_app():
 
 
          
-        kekwq = gr.Textbox(label="kekw")
+        kekwq = gr.Textbox(label="kekwq")
 
 
         mhm_timer = gr.Timer(0.1,active=True)
