@@ -482,6 +482,7 @@ def get_gpu_info():
             current_gpu_info['res_not_supported_str'] = f'{res_not_supported_str}'
             
             gpu_info.append({                
+                "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
                 "gpu_i": current_gpu_info.get("res_gpu_i", "0"),
                 "name": current_gpu_info.get("res_name", "0"),
                 "current_uuid": current_gpu_info.get("res_uuid", "0"),
