@@ -9,7 +9,6 @@ services:
     volumes:
       - /redis:/redis
     restart: unless-stopped
-    command: redis-server --save 60 1 --save 300 10 --save 3600 100 --dbfilename dump.rdb
   
   backend:
     build:
