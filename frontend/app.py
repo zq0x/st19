@@ -475,7 +475,7 @@ def gpu_to_pd2():
     rows = []
 
     try:
-        print(f':::::::::::::::::::::getting key::::::::::::::::')
+        print(f':::::::::::::::::::::getting key:>>>>>::')
         gpu_data2 = r.get('gpu_key')
         print(f'................................................................')
         print(f'.............gpu_data2..........')
@@ -544,6 +544,126 @@ def gpu_to_pd2():
 
 gpu_to_pd2()
 
+
+
+
+
+
+
+
+
+# def disk_to_pd():
+#     rows = []
+#     try:
+#         disk_list = get_disk_data()
+#         for entry in disk_list:
+#             disk_info = ast.literal_eval(entry['disk_info'])
+#             rows.append({                
+#                 "disk_i": entry.get("disk_i", "0"),
+#                 "timestamp": entry.get("timestamp", "0"),
+#                 "device": disk_info.get("device", "0"),
+#                 "usage_percent": disk_info.get("usage_percent", "0"),
+#                 "mountpoint": disk_info.get("mountpoint", "0"),
+#                 "fstype": disk_info.get("fstype", "0"),
+#                 "opts": disk_info.get("opts", "0"),
+#                 "usage_total": disk_info.get("usage_total", "0"),
+#                 "usage_used": disk_info.get("usage_used", "0"),
+#                 "usage_free": disk_info.get("usage_free", "0"),                
+#                 "io_read_count": disk_info.get("io_read_count", "0"),
+#                 "io_write_count": disk_info.get("io_write_count", "0")                
+#             })
+#         df = pd.DataFrame(rows)
+#         return df
+    
+#     except Exception as e:
+#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+#         logging.info(f' &&&&&& [ERROR] [disk_to_pd] GOT e {e}')
+
+# disk_to_pd()
+
+
+
+
+
+def gpu_to_pd2():
+
+    rows = []
+
+    try:
+        print(f'>>>>>::::::::getting key::::::::::::::::')
+        disk_data = r.get('disk_key')
+        print(f'................................................................')
+        print(f'.............disk_data.>>>>>>')
+        print(disk_data)
+        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+        disk_data_json = json.loads(disk_data) if disk_data else None
+        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+        print(f'>>>>>>....disk_data_json>>>>>>.')
+        print(disk_data_json)
+        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+        for entry in disk_data_json:
+            print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+            print("entry")
+            print(entry)
+            print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+            # disk_info = entry.copy()
+            # print("disk_info")
+            # print(disk_info)
+            # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+
+            
+            
+            rows.append({
+                "ts": entry.get("ts", "0"),
+                "disk_i": entry.get("disk_i", "0"),
+                "timestamp": entry.get("timestamp", "0"),
+                "device": entry.get("device", "0"),
+                "usage_percent": entry.get("usage_percent", "0"),
+                "mountpoint": entry.get("mountpoint", "0"),
+                "fstype": entry.get("fstype", "0"),
+                "opts": entry.get("opts", "0"),
+                "usage_total": entry.get("usage_total", "0"),
+                "usage_used": entry.get("usage_used", "0"),
+                "usage_free": entry.get("usage_free", "0"),                
+                "io_read_count": entry.get("io_read_count", "0"),
+                "io_write_count": entry.get("io_write_count", "0")                
+            })
+            print(f'>>>>>2222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
+            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
+            print(f'rows: {rows}')
+            print(f'>>>>>@@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@@')
+            print(f'>>>>>>>>>>222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
+            df = pd.DataFrame(rows)
+            
+            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
+            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+            print(f'df: {df}')
+            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
+            print(f'>>>>>@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+            return df
+        
+        
+    
+    except Exception as e:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+
+
+
+def disk_to_pd2():
+    rows = []
+    try:
+        disk_list = get_disk_data()
+        for entry in disk_list:
+            disk_info = ast.literal_eval(entry['disk_info'])
+
+        df = pd.DataFrame(rows)
+        return df
+    
+    except Exception as e:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+        logging.info(f' &&&&&& [ERROR] [disk_to_pd] GOT e {e}')
+
+disk_to_pd2()
 
 
 
@@ -1187,237 +1307,6 @@ def network_to_pd():
         })
         df = pd.DataFrame(rows)
         return df
-
-
-
-def disk_to_pd():
-    rows = []
-    try:
-        disk_list = get_disk_data()
-        for entry in disk_list:
-            disk_info = ast.literal_eval(entry['disk_info'])
-            rows.append({                
-                "disk_i": entry.get("disk_i", "0"),
-                "timestamp": entry.get("timestamp", "0"),
-                "device": disk_info.get("device", "0"),
-                "usage_percent": disk_info.get("usage_percent", "0"),
-                "mountpoint": disk_info.get("mountpoint", "0"),
-                "fstype": disk_info.get("fstype", "0"),
-                "opts": disk_info.get("opts", "0"),
-                "usage_total": disk_info.get("usage_total", "0"),
-                "usage_used": disk_info.get("usage_used", "0"),
-                "usage_free": disk_info.get("usage_free", "0"),                
-                "io_read_count": disk_info.get("io_read_count", "0"),
-                "io_write_count": disk_info.get("io_write_count", "0")                
-            })
-        df = pd.DataFrame(rows)
-        return df
-    
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-        logging.info(f' &&&&&& [ERROR] [disk_to_pd] GOT e {e}')
-
-disk_to_pd()
-
-
-
-
-def get_gpu_info():
-    try:
-
-        device_count = pynvml.nvmlDeviceGetCount()
-        gpu_info = []
-        for i in range(0,device_count):
-            current_gpu_info = {}
-            current_gpu_info['res_gpu_i'] = str(i)           
-            
-
-            
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-            
-
-            
-            try:
-                res_uuid = pynvml.nvmlDeviceGetUUID(handle)
-                current_gpu_info['res_uuid'] = f'{res_uuid}'
-            except Exception as e:
-                print(f'0 gpu_info {e}')
-                current_gpu_info['res_uuid'] = f'0'
-            
-            
-            
-            try:
-                res_name = pynvml.nvmlDeviceGetName(handle)
-                current_gpu_info['res_name'] = f'{res_name}'
-            except Exception as e:
-                print(f'00 gpu_info {e}')
-                current_gpu_info['res_name'] = f'0'
-            
-            
-            
-        
-            
-            try:
-                utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                # mem_util = f'{(mem_used / mem_total) * 100} %'
-                res_gpu_util = f'{utilization.gpu}%'
-                current_gpu_info['res_gpu_util'] = f'{res_gpu_util}'
-                
-                
-                # res_mem_util = f'{utilization.memory}%'
-                # current_gpu_info['res_mem_util'] = f'{res_mem_util}'
-            except Exception as e:
-                print(f'1 gpu_info {e}')
-
-            try: 
-                mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-                res_mem_total = f'{mem_info.total / 1024 ** 2:.2f} MB'
-                current_gpu_info['res_mem_total'] = f'{res_mem_total}'
-                res_mem_used = f'{mem_info.used / 1024 ** 2:.2f} MB'
-                current_gpu_info['res_mem_used'] = f'{res_mem_used}'
-                res_mem_free = f'{mem_info.free / 1024 ** 2:.2f} MB'
-                current_gpu_info['res_mem_free'] = f'{res_mem_free}'
-                
-                res_mem_util = (float(mem_info.used / 1024**2)/float(mem_info.total / 1024**2)) * 100
-                current_gpu_info['res_mem_util'] = f'{"{:.2f}".format(res_mem_util)}% ({res_mem_used}/{res_mem_total})'
-
-            except Exception as e:
-                print(f'2 gpu_info {e}')
-            
-            try:
-                # Get GPU temperature
-                temperature = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
-                res_temperature = f'{temperature}°C'
-                current_gpu_info['res_temperature'] = f'{res_temperature}'
-            except Exception as e:
-                print(f'3 gpu_info {e}')
-                
-            try:
-                # Get GPU fan speed
-                fan_speed = pynvml.nvmlDeviceGetFanSpeed(handle)
-                res_fan_speed = f'{fan_speed}%'
-                current_gpu_info['res_fan_speed'] = f'{res_fan_speed}'
-            except Exception as e:
-                print(f'4 gpu_info {e}')
-
-
-            try:
-                # Get GPU power usage
-                power_usage = pynvml.nvmlDeviceGetPowerUsage(handle)
-                res_power_usage = f'{power_usage / 1000:.2f} W'
-                current_gpu_info['res_power_usage'] = f'{res_power_usage}'
-            except Exception as e:
-                print(f'5 gpu_info {e}')
-        
-        
-            try:
-                # Get GPU clock speeds
-                clock_info_graphics = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_GRAPHICS)
-                res_clock_info_graphics = f'{clock_info_graphics} MHz'
-                current_gpu_info['res_clock_info_graphics'] = f'{res_clock_info_graphics}'
-            except Exception as e:
-                print(f'6 gpu_info {e}')
-            
-            
-            try:
-                clock_info_mem = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_MEM)
-                res_clock_info_mem = f'{clock_info_mem} MHz'
-                current_gpu_info['res_clock_info_mem'] = f'{res_clock_info_mem}'
-            except Exception as e:
-                print(f'7 gpu_info {e}')
-                
-            try:
-                # Get GPU compute capability (compute_capability)
-                cuda_cores = pynvml.nvmlDeviceGetNumGpuCores(handle)
-                res_cuda_cores = f'{cuda_cores}'
-                current_gpu_info['res_cuda_cores'] = f'{res_cuda_cores}'
-            except Exception as e:
-                print(f'8 gpu_info {e}')
-
-            res_supported = []
-            res_not_supported = []
-            try:
-                # Get GPU compute capability (CUDA cores)
-                compute_capability = pynvml.nvmlDeviceGetCudaComputeCapability(handle)
-                compute_capability_str = f'{compute_capability[0]}.{compute_capability[1]}'
-                res_compute_capability = f'{compute_capability_str}'
-
-                if float(res_compute_capability) >= 8:
-                    res_supported.append('Bfloat16')
-                else:
-                    res_not_supported.append('Bfloat16')
-            except Exception as e:
-                print(f'9 gpu_info {e}')
-                res_compute_capability = 0
-
-            
-            res_supported_str = ",".join(res_supported)
-            current_gpu_info['res_supported_str'] = f'{res_supported_str}'
-            res_not_supported_str = ",".join(res_not_supported)
-            current_gpu_info['res_not_supported_str'] = f'{res_not_supported_str}'
-            
-            gpu_info.append({                
-                "gpu_i": current_gpu_info.get("res_gpu_i", "0"),
-                "name": current_gpu_info.get("res_name", "0"),
-                "current_uuid": current_gpu_info.get("res_uuid", "0"),
-                "gpu_util": current_gpu_info.get("res_gpu_util", "0"),
-                "mem_util": current_gpu_info.get("res_mem_util", "0"),
-                "mem_total": current_gpu_info.get("res_mem_total", "0"),
-                "mem_used": current_gpu_info.get("res_mem_used", "0"),
-                "mem_free": current_gpu_info.get("res_mem_free", "0"),
-                "temperature": current_gpu_info.get("res_temperature", "0"),
-                "fan_speed": current_gpu_info.get("res_fan_speed", "0"),
-                "power_usage": current_gpu_info.get("res_power_usage", "0"),
-                "clock_info_graphics": current_gpu_info.get("res_clock_info_graphics", "0"),
-                "clock_info_mem": current_gpu_info.get("res_clock_info_mem", "0"),
-                "cuda_cores": current_gpu_info.get("res_cuda_cores", "0"),
-                "compute_capability": current_gpu_info.get("res_compute_capability", "0"),
-                "supported": current_gpu_info.get("res_supported", "0"),
-                "not_supported": current_gpu_info.get("res_not_supported", "0"),
-                "not_supported": current_gpu_info.get("res_not_supported", "0")
-            })
-                        
-        return gpu_info
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-        return f'{e}'
-
-
-
-def update_gpu_data():
-
-    data_gpu = get_gpu_info()
-
-
-    pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
-    pipe.execute()
-    gpu_data2 = r.get('gpu_key')
-    print(f'................................................................')
-    print(f'.............gpu_data2..........')
-    print(gpu_data2)
-    print(f'................................................................')
-    current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-    print(f'................................................................')
-    print(f'.............current_data2..........')
-    print(current_data2)
-    print(f'................................................................')
-    # return "asdf"
-    return current_data2
-
-
-# def update_gpu_data():
-
-#     data_gpu = get_gpu_info()
-
-
-#     pipe.setex('gpu_key', 3600, json.dumps([data_gpu]))
-#     pipe.execute()
-#     gpu_data2 = r.get('gpu_key')
-#     current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-#     return current_data2
-
-
-
 
 
 
@@ -3503,8 +3392,8 @@ def create_app():
                 
 
 
-        # disk_timer = gr.Timer(1,active=True)
-        # disk_timer.tick(disk_to_pd, outputs=disk_dataframe)
+        disk_timer = gr.Timer(1,active=True)
+        disk_timer.tick(disk_to_pd2, outputs=disk_dataframe)
 
 
          

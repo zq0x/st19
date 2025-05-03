@@ -100,6 +100,62 @@ with open(DEFAULTS_PATH, "r", encoding="utf-8") as f:
 
 
 
+
+def get_disk_info():
+    try:
+        disk_info = []
+        partitions = psutil.disk_partitions(all=False)
+        processed_devices = set()
+        for partition in partitions:
+            device = partition.device
+            if device not in processed_devices:
+                processed_devices.add(device)
+                current_disk_info = {}
+                try:                
+                    current_disk_info['device'] = str(partition.device)
+                    current_disk_info['mountpoint'] = str(partition.mountpoint)
+                    current_disk_info['fstype'] = str(partition.fstype)
+                    current_disk_info['opts'] = str(partition.opts)
+                    
+                    disk_usage = psutil.disk_usage(partition.mountpoint)
+                    current_disk_info['usage_total'] = f'{disk_usage.total / (1024**3):.2f} GB'
+                    current_disk_info['usage_used'] = f'{disk_usage.used / (1024**3):.2f} GB'
+                    current_disk_info['usage_free'] = f'{disk_usage.free / (1024**3):.2f} GB'
+                    current_disk_info['usage_percent'] = f'{disk_usage.percent}%'
+                    
+                except Exception as e:
+                    print(f'[ERROR] [get_disk_info] Usage: [Permission denied] {e}')
+                    pass
+                
+                try:                
+                    io_stats = psutil.disk_io_counters()
+                    current_disk_info['io_read_count'] = str(io_stats.read_count)
+                    current_disk_info['io_write_count'] = str(io_stats.write_count)
+                    
+                except Exception as e:
+                    print(f'[ERROR] [get_disk_info] Disk I/O statistics not available on this system {e}')
+                    pass
+                
+                disk_info.append({
+                    "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
+                    "device": current_disk_info.get("device", "0"),
+                    "mountpoint": current_disk_info.get("mountpoint", "0"),
+                    "fstype": current_disk_info.get("fstype", "0"),
+                    "opts": current_disk_info.get("opts", "0"),
+                    "usage_total": current_disk_info.get("usage_total", "0"),
+                    "usage_used": current_disk_info.get("usage_used", "0"),
+                    "usage_free": current_disk_info.get("usage_free", "0"),
+                    "usage_percent": current_disk_info.get("usage_percent", "0"),
+                    "io_read_count": current_disk_info.get("io_read_count", "0"),
+                    "io_write_count": current_disk_info.get("io_write_count", "0")
+                })
+
+        return disk_info
+    except Exception as e:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+        return f'{e}'
+
+
 def get_gpu_info():
     try:
 
@@ -251,7 +307,7 @@ def get_gpu_info():
             res_not_supported_str = ",".join(res_not_supported)
             current_gpu_info['res_not_supported_str'] = f'{res_not_supported_str}'
             
-            gpu_info.append({                
+            gpu_info.append({
                 "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
                 "gpu_i": current_gpu_info.get("res_gpu_i", "0"),
                 "name": current_gpu_info.get("res_name", "0"),
@@ -288,6 +344,25 @@ def get_gpu_info():
 
 
 
+async def update_disk():
+    while True:
+        try:
+            print(f'==================!!!!!! updating ==================')
+            data_disk = get_disk_info()
+            print(f'==================!!!!!! data_disk: {data_disk} ==================')
+            pipe.set('disk_key', json.dumps(data_disk))
+            await pipe.execute()
+            print(f'==================!!!!!! done ==================')
+            print(f'==================!!!!!! getting ==================')
+            res_disk = await r.get('disk_key')
+            print(f'==================!!!!!! res_disk ==================')
+            print(f'==================!!!!!! {res_disk} ==================')
+            await asyncio.sleep(0.1)
+        except Exception as e: 
+            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
+            await asyncio.sleep(0.1)
+
+
 async def update_gpu():
     while True:
         try:
@@ -311,6 +386,7 @@ async def update_gpu():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    asyncio.create_task(update_disk())
     asyncio.create_task(update_gpu())
     yield
 
