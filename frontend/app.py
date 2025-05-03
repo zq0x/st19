@@ -20,13 +20,13 @@ import psutil
 import git
 from git import Repo
 import pynvml
-import redis
-# import redis.asyncio as redis
+# import redis
+import redis.asyncio as redis
 
 print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
-r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
-# pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
-# r = redis.Redis(connection_pool=pool)
+# r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
+pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
+r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
 
 REQUEST_TIMEOUT = 300
@@ -468,7 +468,7 @@ def docker_api(req_method,req_var):
 
 
 
-def gpu_to_pd2():
+async def gpu_to_pd2():
     global MEM_TOTAL
     global MEM_USED
     global MEM_FREE
@@ -476,7 +476,7 @@ def gpu_to_pd2():
 
     try:
         print(f':::::::::::::::::::::getting key::::::::::::::::')
-        gpu_data2 = r.get('gpu_key')
+        gpu_data2 = await r.get('gpu_key')
         print(f'................................................................')
         print(f'.............gpu_data2..........')
         print(gpu_data2)
@@ -2751,13 +2751,13 @@ def create_app():
         # )
         
         
-        vllm_radio_timer = gr.Timer(5,active=True)
-        vllm_radio_timer.tick(
-            update_vllms_list,
-            None,
-            [vllm_state],
-            show_progress=False
-        )
+        # vllm_radio_timer = gr.Timer(5,active=True)
+        # vllm_radio_timer.tick(
+        #     update_vllms_list,
+        #     None,
+        #     [vllm_state],
+        #     show_progress=False
+        # )
         
         
 
@@ -3502,8 +3502,8 @@ def create_app():
                 
 
 
-        disk_timer = gr.Timer(1,active=True)
-        disk_timer.tick(disk_to_pd, outputs=disk_dataframe)
+        # disk_timer = gr.Timer(1,active=True)
+        # disk_timer.tick(disk_to_pd, outputs=disk_dataframe)
 
 
          
@@ -3517,8 +3517,8 @@ def create_app():
         # gpu_timer.tick(gpu_to_pd, outputs=gpu_dataframe)
         gpu_timer.tick(gpu_to_pd2, outputs=gpu_dataframe)
 
-        network_timer = gr.Timer(1,active=True)
-        network_timer.tick(network_to_pd, outputs=[network_dataframe,kekw])
+        # network_timer = gr.Timer(1,active=True)
+        # network_timer.tick(network_to_pd, outputs=[network_dataframe,kekw])
 
 
     return app
