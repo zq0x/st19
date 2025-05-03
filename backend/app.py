@@ -727,16 +727,13 @@ async def redis_timer_vllm():
 async def redis_timer_gpu_new():
     while True:
         try:
-
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! updating !!!!!!!!!!!!!!!!!!!!!')
             data_gpu = get_gpu_info()
-
-
-            pipe.setex('gpu_key', 3600, json.dumps([data_gpu]))
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
+            # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
+            pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             pipe.execute()
-            gpu_data2 = r.get('gpu_key')
-            current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-            print(f'€€€€€€€€€€€€€€€€€€€€€€€ND current_data2: {current_data2}')
-
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
             await asyncio.sleep(1.0)
         except Exception as e:
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')

@@ -472,9 +472,7 @@ def gpu_to_pd2():
     rows = []
 
     try:
-        data_gpu = get_gpu_info()
-        pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
-        pipe.execute()
+        print(f':::::::::::::::::::::getting key::::::::::::::::')
         gpu_data2 = r.get('gpu_key')
         print(f'................................................................')
         print(f'.............gpu_data2..........')
