@@ -739,10 +739,10 @@ async def redis_timer_gpu_new():
             res_gpu = await r.get('gpu_key')
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.1)
         except Exception as e:
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.1)
 
 
 @asynccontextmanager
