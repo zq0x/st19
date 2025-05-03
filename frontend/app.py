@@ -505,6 +505,7 @@ async def gpu_to_pd2():
             
             
             rows.append({                                
+                "ts": gpu_info.get("ts", "0"),
                 "name": gpu_info.get("name", "0"),
                 "mem_util": gpu_info.get("mem_util", "0"),
                 "timestamp": entry.get("timestamp", "0"),
