@@ -6,21 +6,20 @@ from docker.types import DeviceRequest
 import time
 import os
 import requests
-import redis.asyncio as redis
 import asyncio
 from datetime import datetime
 from contextlib import asynccontextmanager
 import pynvml
 import psutil
 import logging
-
+import redis
 
 
 
 # print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
-# r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
-pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
-r = redis.Redis(connection_pool=pool)
+r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
+# pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
+# r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
 
 
@@ -731,7 +730,8 @@ async def redis_timer_gpu_new():
             data_gpu = get_gpu_info()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
-            pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
+            pipe.set('gpu_key', json.dumps(data_gpu))
+            # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             pipe.execute()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
             await asyncio.sleep(1.0)

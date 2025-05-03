@@ -127,12 +127,11 @@ error_vllm5 = {
     },
     "ts": "0"
 }
-
-pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
-r = redis.Redis(connection_pool=pool)
+# print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
+r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
+# pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
+# r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
-print(f'** connecting to pynvml ... ')
-pynvml.nvmlInit()
 
 
 def redis_api(*req_component,**req_dict):
