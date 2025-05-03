@@ -740,18 +740,18 @@ async def redis_timer_gpu_new():
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
             await asyncio.sleep(0.1)
-        except Exception as e:
+        except Exception as e: 
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
             await asyncio.sleep(0.1)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    asyncio.create_task(redis_timer_gpu())
-    asyncio.create_task(redis_timer_disk())
-    asyncio.create_task(redis_timer_network())
-    asyncio.create_task(redis_timer_vllm())
-    asyncio.create_task(redis_timer_vllm2())
+    # asyncio.create_task(redis_timer_gpu())
+    # asyncio.create_task(redis_timer_disk())
+    # asyncio.create_task(redis_timer_network())
+    # asyncio.create_task(redis_timer_vllm())
+    # asyncio.create_task(redis_timer_vllm2())
     asyncio.create_task(redis_timer_gpu_new())
     yield
 
