@@ -23,7 +23,33 @@ r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
 
 
+# created (running time)
+# port 
+# gpu name 
+# gpu uuid
+# public or private 
+# user 
+# model 
+# vllm image 
+# prompts amount
+# tokens
 
+# computed
+
+
+
+
+
+print(f' %%%%% trying to start docker ...')
+client = docker.from_env()
+print(f' %%%%% docker started!')
+print(f' %%%%% trying to docker network ...')
+network_name = "sys_net"
+# try:
+#     network = client.networks.get(network_name)
+# except docker.errors.NotFound:
+#     network = client.networks.create(network_name, driver="bridge")
+# print(f' %%%%% docker network started! ...')
 
 
 
@@ -67,266 +93,10 @@ with open(DEFAULTS_PATH, "r", encoding="utf-8") as f:
 
 
 
-
-
-# created (running time)
-# port 
-# gpu name 
-# gpu uuid
-# public or private 
-# user 
-# model 
-# vllm image 
-# prompts amount
-# tokens
-
-# computed
+##########################################################################################################
 
 
 
-
-
-async def save_redis(**kwargs):
-    try:
-        if not kwargs:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] [error] No data')
-            return f'no data'
-        else:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] kwargs: {kwargs}')
-        if not kwargs["db_name"]:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] [error] No db_name')
-            return f'no db_name'
-                
-        if not 'vllm_id' in kwargs:            
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] No vllm_id provided. Creating new ...')
-            vllm_id = f'vllm_{str(int(datetime.now().timestamp()))}'
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] ... vllm_id: {vllm_id}')        
-        
-        res_db_list = r.lrange(kwargs["db_name"], 0, -1)
-        if len(res_db_list) > 0:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] found {len(res_db_list)} entries!')
-            vllm_id_list = [entry for entry in res_db_list if json.loads(entry)["vllm_id"] == kwargs["vllm_id"]]
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] found {len(vllm_id_list)} for {kwargs["vllm_id"]}')
-            
-            if len(vllm_id_list) > 0:
-                print(f'Found {kwargs["vllm_id"]}! Updating')                
-                for entry in res_db_list:
-                    parsed_entry = json.loads(entry)  # Convert JSON string to dictionary
-                    print(f'*** parsed_entry {parsed_entry["vllm_id"]}!')
-                    if parsed_entry["vllm_id"] == kwargs["vllm_id"]:
-                        print(f'found vllm_id {kwargs["vllm_id"]}!')
-                        r.lrem(kwargs["db_name"], 0, entry)
-                        print("entry deleted!")
-                        parsed_entry['ts'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        print("trying push ...")
-                        r.rpush(kwargs["db_name"], json.dumps(parsed_entry))
-                        print("pushed!")
-            else:                
-                print(f'didnt find {kwargs["vllm_id"]} yet! Creating')
-                redis_data = {
-                    "db_name": kwargs["db_name"],
-                    "vllm_id": kwargs["vllm_id"],
-                    "model": kwargs["model"], 
-                    "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }    
-                r.rpush(kwargs["db_name"], json.dumps(redis_data))
-                print("created!")
-
-        else:
-            print("no entry found yet .. creating")
-            redis_data = {
-                "db_name": kwargs["db_name"],
-                "vllm_id": vllm_id,
-                "model": kwargs["model"], 
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            r.rpush(kwargs["db_name"], json.dumps(redis_data))
-            print("created!")
-
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [save_redis] [error]: {e}')
-
-
-
-
-
-
-
-prev_bytes_recv = 0
-def get_download_speed():
-    try:
-        global prev_bytes_recv
-        net_io = psutil.net_io_counters()
-        bytes_recv = net_io.bytes_recv
-        download_speed = bytes_recv - prev_bytes_recv
-        prev_bytes_recv = bytes_recv
-        download_speed_kb = download_speed / 1024
-        download_speed_mbit_s = (download_speed * 8) / (1024 ** 2)      
-        bytes_received_mb = bytes_recv
-        return f'download_speed_mbit_s {download_speed_mbit_s} bytes_recv {bytes_recv} download_speed {download_speed} download_speed_kb {download_speed_kb} '
-        # return f'{download_speed_kb:.2f} KB/s (total: {bytes_received_mb:.2f})'
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-        return f'download error: {e}'
-
-
-
-def get_network_info():
-    network_info = []
-    try: 
-        current_total_dl = get_download_speed()
-        network_info.append({
-            "container": f'all',
-            "info": "infoblabalba",            
-            "current_dl": f'{current_total_dl}',
-            "timestamp": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        })
-        res_container_list = client.containers.list(all=True)
-        for container in res_container_list:
-            container_stats = container.stats(stream=False)
-            networks = container_stats.get('networks', {})
-            rx_bytes = 0
-            if networks:
-                rx_bytes = sum(network.get('rx_bytes', 0) for network in networks.values())
-
-            network_info.append({
-                "container": container.name,
-                "info": "infoblabalba",
-                "current_dl": str(rx_bytes),
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-   
-        return network_info
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-        logging.info(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_network_info] {e}')
-        return network_info
-
-async def redis_timer_network():
-    while True:
-        try:
-            current_network_info = get_network_info()
-            res_db_network = await r.get('db_network')
-            if res_db_network is not None:
-                db_network = json.loads(res_db_network)
-                updated_network_data = []
-                for net_info_obj in current_network_info:
-                    update_data = {
-                        "container": str(net_info_obj["container"]),
-                        "info": str(net_info_obj["info"]),
-                        "current_dl": str(net_info_obj["current_dl"]),
-                        "timestamp": str(net_info_obj["timestamp"]),
-                    }
-                    updated_network_data.append(update_data)
-                await r.set('db_network', json.dumps(updated_network_data))
-            else:
-                updated_network_data = []
-                for net_info_obj in current_network_info:
-                    update_data = {
-                        "container": str(net_info_obj["container"]),
-                        "info": str(net_info_obj["info"]),
-                        "current_dl": str(net_info_obj["current_dl"]),
-                        "timestamp": str(net_info_obj["timestamp"]),
-                    }
-                    updated_network_data.append(update_data)
-                    # print(f'[network] 2 updated_network_data: {updated_network_data}')
-                await r.set('db_network', json.dumps(updated_network_data))
-            await asyncio.sleep(1.0)
-        except Exception as e:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            logging.info(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [redis_timer_network] {e}')
-            await asyncio.sleep(1.0)
-
-
-
-
-
-def get_disk_info():
-    try:
-        disk_info = []
-        partitions = psutil.disk_partitions(all=False)
-        processed_devices = set()
-        for partition in partitions:
-            device = partition.device
-            if device not in processed_devices:
-                processed_devices.add(device)
-                current_disk_info = {}
-                try:                
-                    current_disk_info['device'] = str(partition.device)
-                    current_disk_info['mountpoint'] = str(partition.mountpoint)
-                    current_disk_info['fstype'] = str(partition.fstype)
-                    current_disk_info['opts'] = str(partition.opts)
-                    
-                    disk_usage = psutil.disk_usage(partition.mountpoint)
-                    current_disk_info['usage_total'] = f'{disk_usage.total / (1024**3):.2f} GB'
-                    current_disk_info['usage_used'] = f'{disk_usage.used / (1024**3):.2f} GB'
-                    current_disk_info['usage_free'] = f'{disk_usage.free / (1024**3):.2f} GB'
-                    current_disk_info['usage_percent'] = f'{disk_usage.percent}%'
-                    
-                except Exception as e:
-                    print(f'[ERROR] [get_disk_info] Usage: [Permission denied] {e}')
-                    pass
-                
-                try:                
-                    io_stats = psutil.disk_io_counters()
-                    current_disk_info['io_read_count'] = str(io_stats.read_count)
-                    current_disk_info['io_write_count'] = str(io_stats.write_count)
-                    
-                except Exception as e:
-                    print(f'[ERROR] [get_disk_info] Disk I/O statistics not available on this system {e}')
-                    pass
-                
-                disk_info.append({                
-                    "device": current_disk_info.get("device", "0"),
-                    "mountpoint": current_disk_info.get("mountpoint", "0"),
-                    "fstype": current_disk_info.get("fstype", "0"),
-                    "opts": current_disk_info.get("opts", "0"),
-                    "usage_total": current_disk_info.get("usage_total", "0"),
-                    "usage_used": current_disk_info.get("usage_used", "0"),
-                    "usage_free": current_disk_info.get("usage_free", "0"),
-                    "usage_percent": current_disk_info.get("usage_percent", "0"),
-                    "io_read_count": current_disk_info.get("io_read_count", "0"),
-                    "io_write_count": current_disk_info.get("io_write_count", "0")
-                })
-
-        return disk_info
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-        logging.info(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_disk_info] [ERROR] e -> {e}')
-        return f'{e}'
-
-total_disk_info = get_disk_info()
-
-async def redis_timer_disk():
-    while True:
-        try:
-            total_disk_info = get_disk_info()
-            res_db_disk = await r.get('db_disk')
-            if res_db_disk is not None:
-                db_disk = json.loads(res_db_disk)
-                updated_disk_data = []
-                for disk_i in range(0,len(total_disk_info)):
-                    update_data = {
-                        "disk_i": disk_i,
-                        "disk_info": str(total_disk_info[disk_i]),
-                        "timestamp": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                    }
-                    updated_disk_data.append(update_data)
-                await r.set('db_disk', json.dumps(updated_disk_data))
-            else:
-                updated_disk_data = []
-                for disk_i in range(0,len(total_disk_info)):
-                    update_data = {
-                        "disk_i": disk_i,
-                        "disk_info": str(total_disk_info[disk_i]),
-                        "timestamp": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                    }
-                    updated_disk_data.append(update_data)
-                await r.set('db_disk', json.dumps(updated_disk_data))
-            await asyncio.sleep(1.0)
-        except Exception as e:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            await asyncio.sleep(1.0)
 
 
 
@@ -510,221 +280,15 @@ def get_gpu_info():
 
 
 
-total_gpu_info = get_gpu_info()
-
-async def redis_timer_gpu():
-    while True:
-        try:
-            total_gpu_info = get_gpu_info()
-            res_db_gpu = await r.get('db_gpu')
-            if res_db_gpu is not None:
-                db_gpu = json.loads(res_db_gpu)
-                updated_gpu_data = []
-                for gpu_i in range(0,len(total_gpu_info)):
-                    update_data = {
-                        "gpu_i": gpu_i,
-                        "gpu_info": str(total_gpu_info[gpu_i]),
-                        "timestamp": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                    }
-                    updated_gpu_data.append(update_data)
-                await r.set('db_gpu', json.dumps(updated_gpu_data))
-            else:
-                updated_gpu_data = []
-                for gpu_i in range(0,len(total_gpu_info)):
-                    update_data = {
-                        "gpu_i": gpu_i,
-                        "gpu_info": str(total_gpu_info[gpu_i]),
-                        "timestamp": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                    }
-                    updated_gpu_data.append(update_data)
-                await r.set('db_gpu', json.dumps(updated_gpu_data))
-            await asyncio.sleep(1.0)
-        except Exception as e:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            await asyncio.sleep(1.0)
 
 
 
 
-# created (running time)
-# port 
-# gpu name 
-# gpu uuid
-# public or private 
-# user 
-# model 
-# vllm image 
-# prompts amount
-# tokens
-
-# computed
-
-# aaaaa
-
-
-        
-def update_redis(**kwargs):
-    if not kwargs:
-        print(f'[update_redis] No data')
-        return False
-    if not 'db_name' in kwargs:
-        print(f'[update_redis]  no db_name')
-        return False
-    else:
-        print(f'kwargs["db_name"]: {kwargs["db_name"]}')
-    if not kwargs["db_name"]:
-        print(f'[update_redis] Error: Missing "db_name" in input data')
-        return False
-    
-    print(f'[update_redis] getting db ...')
-    res_db_list = r.lrange(kwargs["db_name"], 0, -1)
-    print(f'[update_redis] got db: {res_db_list}')
-    
-    print(f'HÄÄÄÄÄÄ 1')
-    if res_db_list:
-        print(f'HÄÄÄÄÄÄ 2')
-        print(f'found {len(res_db_list)} entries!')
-        
-        req_vllm_id_list = [entry for entry in res_db_list if json.loads(entry)["vllm_id"] == kwargs["vllm_id"]]
-        print(f'found req_vllm_id_list {req_vllm_id_list}!')
-        print(f'found req_vllm_id_list {len(req_vllm_id_list)}!')
-        
-        if len(req_vllm_id_list) > 0:
-            print(f'Found {kwargs["vllm_id"]}! Updating')
-            for entry in res_db_list:
-                parsed_entry = json.loads(entry)  # Convert JSON string to dictionary
-                print(f'*** parsed_entry {parsed_entry["vllm_id"]}!')
-                if parsed_entry["vllm_id"] == kwargs["vllm_id"]:
-                    print(f'found vllm_id {kwargs["vllm_id"]}!')
-                    r.lrem(kwargs["db_name"], 0, entry)
-                    print("entry deleted!")
-                    parsed_entry['ts'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    print("trying push ...")
-                    r.rpush(kwargs["db_name"], json.dumps(parsed_entry))
-                    print("pushed!")
-                    return True
-        else:
-            print(f'didnt find {kwargs["vllm_id"]} yet! Creating')
-            update_data1 = {
-                "db_name": kwargs["db_name"],
-                "vllm_id": kwargs["vllm_id"],
-                "container": "b", 
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }        
-            r.rpush(kwargs["db_name"], json.dumps(update_data1))
-            print("created!")
-            return True
-    else:
-        print(f'HÄÄÄÄÄÄ ELSEEEEEEE')
-        print("no entry found yet .. creating")
-        vllm_id = f'vllm_{str(int(datetime.now().timestamp()))}'
-        update_data1 = {
-            "db_name": kwargs["db_name"],
-            "vllm_id": kwargs["vllm_id"],
-            "container": "b", 
-            "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }        
-        r.rpush(kwargs["db_name"], json.dumps(update_data1))
-        print("created!")
-        return True
-    return True
 
 
 
 
-def get_vllm_info():
-    try:        
-
-        # print(f' @@@ [get_vllm_info] testing redis ...!')
-        print(f' @@@ [get_vllm_info] VOR ERROR??????????????????????????????????????????????????')
-        update_data3 = {"db_name": "db_vllm", "vllm_id": "10", "container": "b", "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'}
-        res_update_redis = update_redis(**update_data3)
-        print(f' @@@ [get_vllm_info] res_update_redis: {res_update_redis} ...!')
-        
-        
-        # redis_data = {"db_name": "db_vllm", "vllm_id": "10", "model": "blabla", "ts": "123"}
-        # print(f' @@@ [get_vllm_info] trying to save redis ...')
-        # save_redis(**redis_data)
-        # print(f' @@@ [get_vllm_info] saved redis!')
-
-        return f'{update_data3} saved!'
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllm_info] {e}')
-        logging.info(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllm_info] [ERROR] e -> {e}')
-        return f'{e}'
-
-
-total_vllm_info = get_vllm_info()
-
-async def redis_timer_vllm2():
-    while True:
-        try:
-            current_network_info = get_network_info()
-            res_db_network = await r.get('db_vllm2')
-            if res_db_network is not None:
-                db_network = json.loads(res_db_network)
-                updated_network_data = []
-                for net_info_obj in current_network_info:
-                    update_data = {
-                        "container": str(net_info_obj["container"]),
-                        "info": str(net_info_obj["info"]),
-                        "current_dl": str(net_info_obj["current_dl"]),
-                        "timestamp": str(net_info_obj["timestamp"]),
-                    }
-                    updated_network_data.append(update_data)
-                await r.set('db_vllm2', json.dumps(updated_network_data))
-            else:
-                updated_network_data = []
-                for net_info_obj in current_network_info:
-                    update_data = {
-                        "container": str(net_info_obj["container"]),
-                        "info": str(net_info_obj["info"]),
-                        "current_dl": str(net_info_obj["current_dl"]),
-                        "timestamp": str(net_info_obj["timestamp"]),
-                    }
-                    updated_network_data.append(update_data)
-                    # print(f'[network] 2 updated_network_data: {updated_network_data}')
-                await r.set('db_vllm2', json.dumps(updated_network_data))
-            await asyncio.sleep(1.0)
-        except Exception as e:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            logging.info(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [redis_timer_network] {e}')
-            await asyncio.sleep(1.0)
-
-async def redis_timer_vllm():
-    while True:
-        try:
-            total_vllm_info = get_vllm_info()
-            res_db_vllm = await r.get('db_vllm')
-            if res_db_vllm is not None:
-                db_vllm = json.loads(res_db_vllm)
-                updated_vllm_data = []
-                for vllm_i in range(0,len(total_vllm_info)):
-                    update_data = {
-                        "db_name": vllm_i,
-                        "vllm_id": vllm_i,
-                        "model": "redis_timer_vllm",
-                        "ts": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                    }
-                    updated_vllm_data.append(update_data)
-                await r.set('db_vllm', json.dumps(updated_vllm_data))
-            else:
-                updated_vllm_data = []
-                for vllm_i in range(0,len(total_vllm_info)):
-                    update_data = {
-                        "db_name": vllm_i,
-                        "vllm_id": vllm_i,
-                        "model": "redis_timer_vllm",
-                        "ts": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                    }
-                    updated_vllm_data.append(update_data)
-                await r.set('db_vllm', json.dumps(updated_vllm_data))
-            await asyncio.sleep(1.0)
-        except Exception as e:
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            await asyncio.sleep(1.0)
-
-async def redis_timer_gpu_new():
+async def update_gpu():
     while True:
         try:
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! updating !!!!!!!!!!!!!!!!!!!!!')
@@ -747,26 +311,11 @@ async def redis_timer_gpu_new():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # asyncio.create_task(redis_timer_gpu())
-    # asyncio.create_task(redis_timer_disk())
-    # asyncio.create_task(redis_timer_network())
-    # asyncio.create_task(redis_timer_vllm())
-    # asyncio.create_task(redis_timer_vllm2())
-    asyncio.create_task(redis_timer_gpu_new())
+    asyncio.create_task(update_gpu())
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-print(f' %%%%% trying to start docker ...')
-client = docker.from_env()
-print(f' %%%%% docker started!')
-print(f' %%%%% trying to docker network ...')
-network_name = "sys_net"
-# try:
-#     network = client.networks.get(network_name)
-# except docker.errors.NotFound:
-#     network = client.networks.create(network_name, driver="bridge")
-# print(f' %%%%% docker network started! ...')
 
 
 
