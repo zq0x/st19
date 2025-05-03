@@ -12,14 +12,14 @@ from contextlib import asynccontextmanager
 import pynvml
 import psutil
 import logging
-import redis
+# import redis
+import redis.asyncio as redis
 
 
-
-# print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
-r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
-# pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
-# r = redis.Redis(connection_pool=pool)
+print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
+# r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
+pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
+r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
 
 
