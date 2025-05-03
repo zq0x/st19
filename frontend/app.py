@@ -1,6 +1,5 @@
 from dataclasses import dataclass, fields
 import gradio as gr
-import redis
 import threading
 import time
 import os
@@ -21,7 +20,8 @@ import psutil
 import git
 from git import Repo
 import pynvml
-
+import redis
+# import redis.asyncio as redis
 
 print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
 r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)

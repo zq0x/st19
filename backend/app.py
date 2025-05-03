@@ -732,8 +732,12 @@ async def redis_timer_gpu_new():
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             pipe.set('gpu_key', json.dumps(data_gpu))
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
-            pipe.execute()
+            await pipe.execute()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! getting !!!!!!!!!!!!!!!!!!!!!')
+            res_gpu = await r.get('gpu_key')
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
             await asyncio.sleep(1.0)
         except Exception as e:
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
