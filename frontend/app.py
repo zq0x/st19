@@ -3514,7 +3514,7 @@ def create_app():
         # mhm_timer = gr.Timer(0.1,active=True)
         # mhm_timer.tick(update_gpu_data, outputs=[kekwq])
         
-        gpu_timer = gr.Timer(1,active=True)
+        gpu_timer = gr.Timer(0.1,active=True)
         # gpu_timer.tick(gpu_to_pd, outputs=gpu_dataframe)
         gpu_timer.tick(gpu_to_pd2, outputs=gpu_dataframe)
 
