@@ -1334,7 +1334,7 @@ def transcribe_audio(audio_model,audio_path,device,compute_type):
         
         response = requests.post(AUDIO_URL, json={
             "method": "status"
-        }, timeout=SEARCH_REQUEST_TIMEOUT)
+        }, timeout=600)
 
         if response.status_code == 200:          
             print(f'[transcribe_audio] >> got response == 200 ... building json ... {response}')
@@ -2925,7 +2925,7 @@ def create_app():
 
         
         
-            with gr.TabItem("Audio", id=4):
+            with gr.TabItem("Automatic Speech Recognition", id=4):
                 with gr.Row(visible=True) as row_vllm_audio:
                     with gr.Column(scale=2):
                         with gr.Accordion(("Automatic Speech Recognition"), open=True, visible=True) as acc_audio:
@@ -2934,27 +2934,24 @@ def create_app():
                             
                             device=gr.Radio(["cpu", "cuda"], value="cpu", label="Select architecture", info="Your system supports CUDA!. Make sure all drivers installed. /checkcuda if cuda")
                             compute_type=gr.Radio(["int8"], value="int8", label="Compute type", info="Select a compute type")
-                            
-                            translate_checkbox = gr.Checkbox(label="Enable Translation", value=False)
-                            source_lang = gr.Dropdown(["auto"], value="auto", label="Source Language", info="Auto-detection by default")
-                            target_lang = gr.Dropdown(["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko"], 
-                                                    value="en", label="Target Language")
-                
                 
                     with gr.Column(scale=1):
                         with gr.Row() as vllm_prompt_output:
                             audio_path = gr.Textbox(visible=True)
                             text_output = gr.Textbox(label="Transcription", lines=8)
-                            srt_status = gr.Textbox(label="SRT Status", visible=True)
-            
                         with gr.Row() as vllm_prompt:
                             transcribe_btn = gr.Button("Transcribe")
-                            transcribe_srt_btn = gr.Button("Transcribe + SRT")
-                            translate_btn = gr.Button("Translate", visible=True)
-                            download_srt_btn = gr.Button("Download SRT", visible=True)
-                            srt_download_link = gr.File(label="SRT File", visible=True)
+                        
         
-        
+        transcribe_btn.click(
+            get_audio_path,
+            audio_input,
+            [text_output,audio_path]
+            ).then(
+            transcribe_audio,
+            [audio_model,audio_path,device,compute_type],
+            text_output
+        )
         output = gr.Textbox(label="Output", lines=4, show_label=True, visible=True)     
         
         # aaaa
