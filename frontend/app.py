@@ -19,14 +19,18 @@ import logging
 import psutil
 import git
 from git import Repo
-import redis
-# import redis.asyncio as redis
+# import redis
+import redis.asyncio as redis
 
 print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
 # r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
 pool = redis.ConnectionPool(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0, decode_responses=True, max_connections=10)
 r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
+
+
+
+
 
 REQUEST_TIMEOUT = 300
 def wait_for_backend(backend_url, timeout=300):
@@ -301,25 +305,25 @@ def dropdown_load_tested_models():
 
 
 
-def get_network_data():
+async def get_network_data():
     try:
-        res_network_data_all = json.loads(r.get('db_network'))
+        res_network_data_all = json.loads(await r.get('db_network'))
         return res_network_data_all
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
         return e
 
-def get_gpu_data():
+async def get_gpu_data():
     try:
-        res_gpu_data_all = json.loads(r.get('db_gpu'))
+        res_gpu_data_all = json.loads(await r.get('db_gpu'))
         return res_gpu_data_all
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
         return e
 
-def get_disk_data():
+async def get_disk_data():
     try:
-        res_disk_data_all = json.loads(r.get('db_disk'))
+        res_disk_data_all = json.loads(await r.get('db_disk'))
         return res_disk_data_all
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
@@ -463,7 +467,7 @@ def docker_api(req_method,req_var):
 
 
 
-def gpu_to_pd2():
+async def gpu_to_pd2():
     global MEM_TOTAL
     global MEM_USED
     global MEM_FREE
@@ -471,124 +475,7 @@ def gpu_to_pd2():
 
     try:
         print(f':::::::::::::::::::::getting key:>>>>>::')
-        gpu_data2 = r.get('gpu_key')
-        print(f'................................................................')
-        print(f'.............gpu_data2..........')
-        print(gpu_data2)
-        print(f'................................................................')
-        current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-        print(f'................................................................')
-        print(f'.............current_data2..........')
-        print(current_data2)
-        print(f'................................................................')
-        for entry in current_data2:
-            print(f'................................................................')
-            print("entry")
-            print(entry)
-            print(f'................................................................')
-            gpu_info = entry.copy()
-            print("gpu_info")
-            print(gpu_info)
-            print(f'................................................................')
-            current_gpu_mem_total = gpu_info.get("mem_total", "0")
-            current_gpu_mem_used = gpu_info.get("mem_used", "0")
-            current_gpu_mem_free = gpu_info.get("mem_free", "0")
-            MEM_TOTAL = float(MEM_TOTAL) + float(current_gpu_mem_total.split()[0])
-            MEM_USED = float(MEM_USED) + float(current_gpu_mem_used.split()[0])
-            MEM_FREE = float(MEM_FREE) + float(current_gpu_mem_free.split()[0])
-        
-            
-            
-            rows.append({                                
-                "ts": gpu_info.get("ts", "0"),
-                "name": gpu_info.get("name", "0"),
-                "mem_util": gpu_info.get("mem_util", "0"),
-                "timestamp": entry.get("timestamp", "0"),
-                "fan_speed": gpu_info.get("fan_speed", "0"),
-                "temperature": gpu_info.get("temperature", "0"),
-                "gpu_util": gpu_info.get("gpu_util", "0"),
-                "power_usage": gpu_info.get("power_usage", "0"),
-                "clock_info_graphics": gpu_info.get("clock_info_graphics", "0"),
-                "clock_info_mem": gpu_info.get("clock_info_mem", "0"),                
-                "cuda_cores": gpu_info.get("cuda_cores", "0"),
-                "compute_capability": gpu_info.get("compute_capability", "0"),
-                "current_uuid": gpu_info.get("current_uuid", "0"),
-                "gpu_i": entry.get("gpu_i", "0"),
-                "supported": gpu_info.get("supported", "0"),
-                "not_supported": gpu_info.get("not_supported", "0"),
-                "status": "ok"
-            })
-            print(f'@@@@2222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            print(f'rows: {rows}')
-            print(f'@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            print(f'@@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            df = pd.DataFrame(rows)
-            
-            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            print(f'df: {df}')
-            print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            print(f'@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-            return df
-        
-        
-    
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-
-gpu_to_pd2()
-
-
-
-
-
-
-
-
-
-# def disk_to_pd():
-#     rows = []
-#     try:
-#         disk_list = get_disk_data()
-#         for entry in disk_list:
-#             disk_info = ast.literal_eval(entry['disk_info'])
-#             rows.append({                
-#                 "disk_i": entry.get("disk_i", "0"),
-#                 "timestamp": entry.get("timestamp", "0"),
-#                 "device": disk_info.get("device", "0"),
-#                 "usage_percent": disk_info.get("usage_percent", "0"),
-#                 "mountpoint": disk_info.get("mountpoint", "0"),
-#                 "fstype": disk_info.get("fstype", "0"),
-#                 "opts": disk_info.get("opts", "0"),
-#                 "usage_total": disk_info.get("usage_total", "0"),
-#                 "usage_used": disk_info.get("usage_used", "0"),
-#                 "usage_free": disk_info.get("usage_free", "0"),                
-#                 "io_read_count": disk_info.get("io_read_count", "0"),
-#                 "io_write_count": disk_info.get("io_write_count", "0")                
-#             })
-#         df = pd.DataFrame(rows)
-#         return df
-    
-#     except Exception as e:
-#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-#         logging.info(f' &&&&&& [ERROR] [disk_to_pd] GOT e {e}')
-
-# disk_to_pd()
-
-
-
-
-
-def gpu_to_pd2():
-    global MEM_TOTAL
-    global MEM_USED
-    global MEM_FREE
-    rows = []
-
-    try:
-        print(f':::::::::::::::::::::getting key::::::::::::::::')
-        gpu_data2 = r.get('gpu_key')
+        gpu_data2 = await r.get('gpu_key')
         print(f'................................................................')
         print(f'.............gpu_data2..........')
         print(gpu_data2)
@@ -653,19 +540,138 @@ def gpu_to_pd2():
     
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+        return f'error: {e}'
 
 gpu_to_pd2()
 
 
 
 
-def disk_to_pd2():
+
+
+
+
+
+# def disk_to_pd():
+#     rows = []
+#     try:
+#         disk_list = get_disk_data()
+#         for entry in disk_list:
+#             disk_info = ast.literal_eval(entry['disk_info'])
+#             rows.append({                
+#                 "disk_i": entry.get("disk_i", "0"),
+#                 "timestamp": entry.get("timestamp", "0"),
+#                 "device": disk_info.get("device", "0"),
+#                 "usage_percent": disk_info.get("usage_percent", "0"),
+#                 "mountpoint": disk_info.get("mountpoint", "0"),
+#                 "fstype": disk_info.get("fstype", "0"),
+#                 "opts": disk_info.get("opts", "0"),
+#                 "usage_total": disk_info.get("usage_total", "0"),
+#                 "usage_used": disk_info.get("usage_used", "0"),
+#                 "usage_free": disk_info.get("usage_free", "0"),                
+#                 "io_read_count": disk_info.get("io_read_count", "0"),
+#                 "io_write_count": disk_info.get("io_write_count", "0")                
+#             })
+#         df = pd.DataFrame(rows)
+#         return df
+    
+#     except Exception as e:
+#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+#         logging.info(f' &&&&&& [ERROR] [disk_to_pd] GOT e {e}')
+
+# disk_to_pd()
+
+
+
+
+
+async def gpu_to_pd2():
+    global MEM_TOTAL
+    global MEM_USED
+    global MEM_FREE
+    rows = []
+
+    try:
+        print(f':::::::::::::::::::::getting key::::::::::::::::')
+        gpu_data2 = await r.get('gpu_key')
+        print(f'................................................................')
+        print(f'.............gpu_data2..........')
+        print(gpu_data2)
+        print(f'................................................................')
+        current_data2 = json.loads(gpu_data2) if gpu_data2 else None
+        print(f'................................................................')
+        print(f'.............current_data2..........')
+        print(current_data2)
+        print(f'................................................................')
+        for entry in current_data2:
+            print(f'................................................................')
+            print("entry")
+            print(entry)
+            print(f'................................................................')
+            gpu_info = entry.copy()
+            print("gpu_info")
+            print(gpu_info)
+            print(f'................................................................')
+            current_gpu_mem_total = gpu_info.get("mem_total", "0")
+            current_gpu_mem_used = gpu_info.get("mem_used", "0")
+            current_gpu_mem_free = gpu_info.get("mem_free", "0")
+            MEM_TOTAL = float(MEM_TOTAL) + float(current_gpu_mem_total.split()[0])
+            MEM_USED = float(MEM_USED) + float(current_gpu_mem_used.split()[0])
+            MEM_FREE = float(MEM_FREE) + float(current_gpu_mem_free.split()[0])
+        
+            
+            
+            rows.append({                                
+                "ts": gpu_info.get("ts", "0"),
+                "name": gpu_info.get("name", "0"),
+                "mem_util": gpu_info.get("mem_util", "0"),
+                "timestamp": entry.get("timestamp", "0"),
+                "fan_speed": gpu_info.get("fan_speed", "0"),
+                "temperature": gpu_info.get("temperature", "0"),
+                "gpu_util": gpu_info.get("gpu_util", "0"),
+                "power_usage": gpu_info.get("power_usage", "0"),
+                "clock_info_graphics": gpu_info.get("clock_info_graphics", "0"),
+                "clock_info_mem": gpu_info.get("clock_info_mem", "0"),                
+                "cuda_cores": gpu_info.get("cuda_cores", "0"),
+                "compute_capability": gpu_info.get("compute_capability", "0"),
+                "current_uuid": gpu_info.get("current_uuid", "0"),
+                "gpu_i": entry.get("gpu_i", "0"),
+                "supported": gpu_info.get("supported", "0"),
+                "not_supported": gpu_info.get("not_supported", "0"),
+                "status": "ok"
+            })
+        print(f'@@@@2222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'rows: {rows}')
+        print(f'@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        df = pd.DataFrame(rows)
+        
+        print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'df: {df}')
+        print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print(f'@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        return df
+        
+        
+    
+    except Exception as e:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+        return f'error: {e}'
+
+gpu_to_pd2()
+
+
+
+
+async def disk_to_pd2():
 
     rows = []
 
     try:
         print(f'>>>>>::::::::getting key::::::::::::::::')
-        disk_data = r.get('disk_key')
+        disk_data = await r.get('disk_key')
         print(f'...>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
         print(f'.>>>>>>>>>>>>>..disk_data.>>>>>>')
         print(disk_data)
@@ -702,24 +708,25 @@ def disk_to_pd2():
                 "io_read_count": entry.get("io_read_count", "0"),
                 "io_write_count": entry.get("io_write_count", "0")                
             })
-            print(f'>>>>>2222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
-            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
-            print(f'rows: {rows}')
-            print(f'>>>>>@@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@@')
-            print(f'>>>>>>>>>>222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
-            df = pd.DataFrame(rows)
-            
-            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
-            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-            print(f'df: {df}')
-            print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
-            print(f'>>>>>@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-            return df
+        print(f'>>>>>2222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
+        print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
+        print(f'rows: {rows}')
+        print(f'>>>>>@@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@@')
+        print(f'>>>>>>>>>>222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
+        df = pd.DataFrame(rows)
+        
+        print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
+        print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print(f'df: {df}')
+        print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
+        print(f'>>>>>@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        return df
         
         
     
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+        return f'error: {e}'
 
 
 
@@ -731,13 +738,13 @@ disk_to_pd2()
 
 
 
-def vllm_to_pd2():
+async def vllm_to_pd2():
 
     rows = []
 
     try:
         print(f'??????::::::::getting key::::::::::::::::')
-        vllm_data = r.get('vllm_key')
+        vllm_data = await r.get('vllm_key')
         print(f'...????????????????????????????????????????????????????????????>>.')
         print(f'.????????????>>>..vllm_data.??????>')
         print(vllm_data)
@@ -781,7 +788,7 @@ def vllm_to_pd2():
     
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-
+        return f'error: {e}'
 
 
 
@@ -1444,7 +1451,7 @@ def network_to_pd():
 
 
 
-def redis_connection(**kwargs):
+async def redis_connection(**kwargs):
     try:
         if not kwargs:
             print(f' **REDIS: Error: no kwargs')
@@ -1464,7 +1471,7 @@ def redis_connection(**kwargs):
             print(f' **REDIS: Error: no select')
             return False
 
-        res_db_list = r.lrange(kwargs["db_name"], 0, -1)
+        res_db_list = await r.lrange(kwargs["db_name"], 0, -1)
 
         # print(f' **REDIS: found {len(res_db_list)} entries!')
         res_db_list = [json.loads(entry) for entry in res_db_list]
@@ -1488,7 +1495,7 @@ def redis_connection(**kwargs):
             if len(res_db_list) > 0:
                 update_i = 0
                 for entry in [json.dumps(entry) for entry in res_db_list]:
-                    r.lrem(kwargs["db_name"], 0, entry)
+                    await r.lrem(kwargs["db_name"], 0, entry)
                     update_i = update_i + 1
                 return res_db_list
             else:
@@ -1499,11 +1506,11 @@ def redis_connection(**kwargs):
             if len(res_db_list) > 0:
                 update_i = 0
                 for entry in [json.dumps(entry) for entry in res_db_list]:
-                    r.lrem(kwargs["db_name"], 0, entry)
+                    await r.lrem(kwargs["db_name"], 0, entry)
                     entry = json.loads(entry)
                     # entry["ts"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     entry["gpu"]["mem"] = f'blablabla + {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-                    r.rpush(kwargs["db_name"], json.dumps(entry))
+                    await r.rpush(kwargs["db_name"], json.dumps(entry))
                     update_i = update_i + 1
                 # print(f' **REDIS: updated ({update_i}/{len(res_db_list)})!')
                 return res_db_list
@@ -1546,7 +1553,7 @@ def redis_connection(**kwargs):
                 },
                 "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }        
-            r.rpush(kwargs["db_name"], json.dumps(data_obj))
+            await r.rpush(kwargs["db_name"], json.dumps(data_obj))
             # print(f' **REDIS: saved!')
             return res_db_list
         
