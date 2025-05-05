@@ -19,7 +19,6 @@ import logging
 import psutil
 import git
 from git import Repo
-import pynvml
 import redis
 # import redis.asyncio as redis
 
@@ -132,10 +131,6 @@ error_vllm5 = {
     },
     "ts": "0"
 }
-
-
-print(f'** connecting to pynvml ... ')
-pynvml.nvmlInit()
 
 
 def redis_api(*req_component,**req_dict):
@@ -2955,141 +2950,8 @@ def create_app():
         output = gr.Textbox(label="Output", lines=4, show_label=True, visible=True)     
         
         # aaaa
-        
-        
-        # Audio processing functions
-        def process_audio(audio_path, audio_model, device, compute_type, action):
-            try:
-                print(f'Processing audio with action: {action}')
-                logging.info(f'Processing audio with action: {action}')
-                
-                response = requests.post(BACKEND_URL, json={
-                    "method": "transcribe",
-                    "audio_model": audio_model,
-                    "audio_path": audio_path,
-                    "device": device,
-                    "compute_type": compute_type,
-                    "generate_srt": (action == "transcribe_srt")
-                }, timeout=REQUEST_TIMEOUT)
 
-                if response.status_code == 200:
-                    res_json = response.json()
-                    if res_json["result_status"] != 200:
-                        raise Exception(res_json["result_data"])
-                    
-                    result = res_json["result_data"]
-                    output_text = f"Detected language: {result['language']}\n\n{result['text']}\n\nProcessing time: {result['processing_time']}"
-                    
-                    if action == "transcribe_srt" and "srt_download_url" in result:
-                        return {
-                            text_output: output_text,
-                            srt_status: "SRT generated successfully",
-                            download_srt_btn: gr.Button(visible=True),
-                            srt_download_link: gr.File(visible=False),
-                            translate_btn: gr.Button(visible=True)
-                        }
-                    return {
-                        text_output: output_text,
-                        translate_btn: gr.Button(visible=True)
-                    }
-                else:
-                    raise Exception(f"Request Error: {response.text}")
-            
-            except Exception as e:
-                logging.exception(f'Exception occurred: {e}')
-                return {
-                    text_output: f"Error: {str(e)}",
-                    srt_status: "Error generating SRT" if action == "transcribe_srt" else ""
-                }
 
-        def translate_text(text, source_lang, target_lang):
-            try:
-                # Extract the actual text content (after language detection info)
-                content = "\n\n".join(text.split("\n\n")[1:]) if "\n\n" in text else text
-                
-                response = requests.post(BACKEND_URL + "/translate", json={
-                    "text": content,
-                    "source_lang": source_lang,
-                    "target_lang": target_lang
-                }, timeout=REQUEST_TIMEOUT)
-
-                if response.status_code == 200:
-                    res_json = response.json()
-                    if res_json["result_status"] != 200:
-                        raise Exception(res_json["result_data"])
-                    
-                    translation = res_json["result_data"]["translated_text"]
-                    return f"Translation ({res_json['result_data']['target_lang']}):\n\n{translation}"
-                else:
-                    raise Exception(f"Translation Error: {response.text}")
-            
-            except Exception as e:
-                logging.exception(f'Translation error: {e}')
-                return f"Translation Error: {str(e)}"
-
-        def download_srt():
-            try:
-                # This would be implemented based on your backend's SRT file handling
-                # You might need to store the SRT path temporarily or use a session-based approach
-                return {
-                    srt_download_link: gr.File(visible=True, value="path_to_srt.srt")
-                }
-            except Exception as e:
-                return {
-                    srt_status: f"Download Error: {str(e)}"
-                }
-
-                
-        
-
-        # transcribe_btn.click(
-        #     get_audio_path,
-        #     audio_input,
-        #     [text_output,audio_path]
-        #     ).then(
-        #     transcribe_audio,
-        #     [audio_model,audio_path,device,compute_type],
-        #     text_output
-        # )
-        
-        
-        transcribe_btn.click(
-            fn=process_audio,
-            inputs=[audio_input, audio_model, device, compute_type, gr.Text("transcribe_only", visible=False)],
-            outputs=[text_output, srt_status, download_srt_btn, srt_download_link, translate_btn]
-        )
-
-        transcribe_srt_btn.click(
-            fn=process_audio,
-            inputs=[audio_input, audio_model, device, compute_type, gr.Text("transcribe_srt", visible=False)],
-            outputs=[text_output, srt_status, download_srt_btn, srt_download_link, translate_btn]
-        )
-
-        translate_btn.click(
-            fn=translate_text,
-            inputs=[text_output, source_lang, target_lang],
-            outputs=[text_output]
-        )
-
-        download_srt_btn.click(
-            fn=download_srt,
-            outputs=[srt_download_link]
-        )
-
-        # Show/hide translation button based on checkbox
-        translate_checkbox.change(
-            fn=lambda x: gr.Button(visible=x),
-            inputs=[translate_checkbox],
-            outputs=[translate_btn]
-        )
-
-        # Update audio path when file is uploaded
-        audio_input.change(
-            fn=lambda x: x,
-            inputs=[audio_input],
-            outputs=[audio_path]
-        )
-                
         
         
         
