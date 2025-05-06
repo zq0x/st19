@@ -2399,10 +2399,10 @@ def create_app():
         app.load(get_vllm, outputs=[vllm_state])
         app.load(get_container, outputs=[container_state])
         
-        txt_lambda_log_helper = gr.Textbox(value="logs")
-        txt_lambda_start_helper = gr.Textbox(value="start")
-        txt_lambda_stop_helper = gr.Textbox(value="stop")
-        txt_lambda_delete_helper = gr.Textbox(value="delete")
+        txt_lambda_log_helper = gr.Textbox(value="logs", visible=False)
+        txt_lambda_start_helper = gr.Textbox(value="start", visible=False)
+        txt_lambda_stop_helper = gr.Textbox(value="stop", visible=False)
+        txt_lambda_delete_helper = gr.Textbox(value="delete", visible=False)
         
         @gr.render(inputs=[container_state])
         def render_container(container_list):
@@ -2846,6 +2846,59 @@ def create_app():
         
         vllms=gr.Radio(["vLLM1", "vLLM2", "Create New"], value="vLLM1", show_label=False, info="Select a vLLM or create a new one. Where?")
         current_tab = gr.Number(value=0, visible=False)
+        with gr.Tabs() as fun_tabs:
+        
+            with gr.TabItem("Audio", id=0):
+                with gr.Row(visible=True) as row_vllm_audio:
+                    with gr.Column(scale=2):
+                        with gr.Accordion(("Audio"), open=True, visible=True) as acc_audio:
+                            audio_input = gr.Audio(label="Upload Audio", type="filepath")
+                            audio_model=gr.Dropdown(defaults_frontend['audio_models'], label="Model size", info="Select a Faster-Whisper model")
+                            
+                            device=gr.Radio(["cpu", "cuda"], value="cpu", label="Select architecture", info="Your system supports CUDA!. Make sure all drivers installed. /checkcuda if cuda")
+                            compute_type=gr.Radio(["int8"], value="int8", label="Compute type", info="Select a compute type")
+                
+                    with gr.Column(scale=1):
+                        with gr.Row() as vllm_prompt_output:
+                            audio_path = gr.Textbox(visible=True)
+                            text_output = gr.Textbox(label="Transcription", lines=8)
+                        with gr.Row() as vllm_prompt:
+                            transcribe_btn = gr.Button("Transcribe")
+                                    
+            with gr.TabItem("Interface", id=1):
+                with gr.Row(visible=True) as row_interface:
+                    with gr.Column(scale=2):
+                        with gr.Accordion(("Interface"), open=True, visible=True) as acc_interface:
+
+
+
+                            with gr.Column(scale=1, visible=True) as vllm_running_engine_argumnts_btn:
+                                vllm_running_engine_arguments_show = gr.Button("LOAD VLLM CREATEEEEEEEEUUUUHHHHHHHH", variant="primary")
+                                vllm_running_engine_arguments_close = gr.Button("CANCEL")
+
+                                    
+
+
+
+
+
+                            
+                            btn_interface = gr.Button("Load Interface",visible=True)
+                            @gr.render(inputs=[selected_model_pipeline_tag, selected_model_id], triggers=[btn_interface.click])
+                            def show_split(text_pipeline, text_model):
+                                if len(text_model) == 0:
+                                    gr.Markdown("Error pipeline_tag or model_id")
+                                else:
+                                    selected_model_id_arr = str(text_model).split('/')
+                                    print(f'selected_model_id_arr {selected_model_id_arr}...')            
+                                    gr.Interface.from_pipeline(pipeline(text_pipeline, model=f'/models/{selected_model_id_arr[0]}/{selected_model_id_arr[1]}'))
+
+
+
+                    with gr.Column(scale=1):
+                        with gr.Row() as vllm_prompt:
+                            interface_btn = gr.Button("Load Gradio Interface")
+                              
         with gr.Tabs() as tabs:
             with gr.TabItem("Download", id=0):
                 with gr.Row(visible=True) as row_vllm_download:
@@ -2926,23 +2979,7 @@ def create_app():
                             prompt_btn = gr.Button("PROMPT")
 
         
-        
-            with gr.TabItem("Automatic Speech Recognition", id=4):
-                with gr.Row(visible=True) as row_vllm_audio:
-                    with gr.Column(scale=2):
-                        with gr.Accordion(("Automatic Speech Recognition"), open=True, visible=True) as acc_audio:
-                            audio_input = gr.Audio(label="Upload Audio", type="filepath")
-                            audio_model=gr.Dropdown(defaults_frontend['audio_models'], label="Model size", info="Select a Faster-Whisper model")
-                            
-                            device=gr.Radio(["cpu", "cuda"], value="cpu", label="Select architecture", info="Your system supports CUDA!. Make sure all drivers installed. /checkcuda if cuda")
-                            compute_type=gr.Radio(["int8"], value="int8", label="Compute type", info="Select a compute type")
-                
-                    with gr.Column(scale=1):
-                        with gr.Row() as vllm_prompt_output:
-                            audio_path = gr.Textbox(visible=True)
-                            text_output = gr.Textbox(label="Transcription", lines=8)
-                        with gr.Row() as vllm_prompt:
-                            transcribe_btn = gr.Button("Transcribe")
+
                         
         
         transcribe_btn.click(
@@ -3005,31 +3042,6 @@ def create_app():
 
             # with gr.Accordion(("Network information"), open=False) as acc_network_dataframe:
             #     network_dataframe = gr.Dataframe()
-
-
-
-
-        with gr.Column(scale=1, visible=True) as vllm_running_engine_argumnts_btn:
-            vllm_running_engine_arguments_show = gr.Button("LOAD VLLM CREATEEEEEEEEUUUUHHHHHHHH", variant="primary")
-            vllm_running_engine_arguments_close = gr.Button("CANCEL")
-
-                
-
-
-
-
-
-        
-        btn_interface = gr.Button("Load Interface",visible=False)
-        @gr.render(inputs=[selected_model_pipeline_tag, selected_model_id], triggers=[btn_interface.click])
-        def show_split(text_pipeline, text_model):
-            if len(text_model) == 0:
-                gr.Markdown("Error pipeline_tag or model_id")
-            else:
-                selected_model_id_arr = str(text_model).split('/')
-                print(f'selected_model_id_arr {selected_model_id_arr}...')            
-                gr.Interface.from_pipeline(pipeline(text_pipeline, model=f'/models/{selected_model_id_arr[0]}/{selected_model_id_arr[1]}'))
-
 
 
 
