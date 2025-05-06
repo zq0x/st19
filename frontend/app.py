@@ -2063,10 +2063,10 @@ def toggle_vllm_load_create(vllm_list):
         gr.Button(visible=False)
     )
 
-def toggle_vllm_prompt(vllm_list_prompt):
-    global PROMPT
-    PROMPT = 'asdasdasdasdasdasdasd'
-    return gr.Textbox(value="9999")   
+# def toggle_vllm_prompt(vllm_list_prompt):
+#     global PROMPT
+#     PROMPT = 'asdasdasdasdasdasdasd'
+#     return gr.Textbox(value="9999")   
     # if "Create New" in vllm_list_prompt:
     #     return (
     #         gr.Accordion(open=False,visible=False),
