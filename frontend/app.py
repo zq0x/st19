@@ -2685,7 +2685,8 @@ def create_app():
                         **Note**: _[vLLM supported models list](https://docs.vllm.ai/en/latest/models/supported_models.html)_        
                         """)
                         input_search = gr.Textbox(placeholder="Enter Hugging Face model name or tag", label=f'found 0 models', show_label=False, autofocus=True)
-                        model_dropdown = gr.Dropdown(choices=[''], interactive=True, show_label=False)
+                with gr.Row(visible=False) as row_model_select:
+                    model_dropdown = gr.Dropdown(choices=[''], interactive=True, show_label=False)
 
 
                 with gr.Row(visible=True) as row_model_info:
