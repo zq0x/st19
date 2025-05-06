@@ -3003,8 +3003,7 @@ def create_app():
 
 
             with gr.Accordion(("Prompt Parameters"), open=False, visible=True) as acc_prompt:
-                                    
-                global PROMPT
+
                 vllmcontainer=gr.Radio(["container_vllm_xoo", "container_vllm_oai", "Create New"], value="container_vllm_oai", show_label=False, info="Select a vllms_prompt or create a new one. Where?"),
                 port=gr.Slider(1370, 1380, step=1, value=1371, label="port", info=f"Choose a port."),
                 prompt = gr.Textbox(placeholder=f'{PROMPT}', value=f'{PROMPT}', label="Prompt", show_label=True, visible=True),
