@@ -92,9 +92,9 @@ services:
       "python", "app.py",
       "--model", "Qwen/Qwen2.5-1.5B-Instruct",
       "--port", "1370",
-      "--tensor-parallel-size", "1",
+      "--tensor-parallel-size", "2",
       "--gpu-memory-utilization", "0.85",
-      "--max-model-len", "2048"
+      "--max-model-len", "4096"
     ]
 
   vllm2:
@@ -123,9 +123,9 @@ services:
     command: [
       "--model", "Qwen/Qwen2.5-1.5B-Instruct",
       "--port", "1371",
-      "--tensor-parallel-size", "1",
+      "--tensor-parallel-size", "2",
       "--gpu-memory-utilization", "0.77",
-      "--max-model-len", "2048",
+      "--max-model-len", "4096",
     ]
   frontend:
     build:
