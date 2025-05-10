@@ -467,9 +467,11 @@ def docker_api(req_method,req_var):
 
 # gpu_to_pd()
 
-
-
-
+async def asdf():
+    print(f'######### ASDF #########')
+    res_asdf = await r.get('asdf')
+    print(f'######### ASDF res -> {res_asdf} #########')
+    return res_asdf
 async def gpu_to_pd2():
     global MEM_TOTAL
     global MEM_USED
@@ -3248,7 +3250,11 @@ def create_app():
         
         gpu_timer = gr.Timer(1,active=True)
         # gpu_timer.tick(gpu_to_pd, outputs=gpu_dataframe)
-        gpu_timer.tick(gpu_to_pd2, outputs=gpu_dataframe)
+        gpu_timer.tick(gpu_to_pd2, outputs=gpu_dataframe)      
+          
+        asdf_timer = gr.Timer(1,active=True)
+        # asdf_timer.tick(asdf_to_pd, outputs=asdf_dataframe)
+        asdf_timer.tick(asdf, outputs=kekwq)
 
         # network_timer = gr.Timer(1,active=True)
         # network_timer.tick(network_to_pd, outputs=[network_dataframe,kekw])

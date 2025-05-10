@@ -104,7 +104,7 @@ def get_vllm_info():
         res_container_list = client.containers.list(all=True)
         res_container_list_attrs = [container.attrs for container in res_container_list]
         for c in res_container_list_attrs:
-            print(f'????????????????????? {c}')
+            # print(f'????????????????????? {c}')
             print(f'????????????????????? {c["Name"]}')
             vllm_info.append({
                 "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
@@ -398,20 +398,26 @@ async def update_disk():
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
             await asyncio.sleep(0.1)
 
-
+# cccc
 async def update_gpu():
     while True:
         try:
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! updating !!!!!!!!!!!!!!!!!!!!!')
             data_gpu = get_gpu_info()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu[0]["mem_util"]: {data_gpu[0]["mem_util"]} !!!!!!!!!!!!!!!!!!!!!')
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
+            test_gpuuid = {
+                "GPU-dc9759b2-85a9-d448-1469-fa19388356af": f'{data_gpu[0]["mem_util"]}'
+            }
             pipe.set('gpu_key', json.dumps(data_gpu))
+            pipe.set('asdf', json.dumps(test_gpuuid))
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             await pipe.execute()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! getting !!!!!!!!!!!!!!!!!!!!!')
             res_gpu = await r.get('gpu_key')
+            
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
             await asyncio.sleep(0.1)
