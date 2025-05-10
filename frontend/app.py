@@ -29,6 +29,9 @@ r = redis.Redis(connection_pool=pool)
 pipe = r.pipeline()
 
 
+async def update_timer():
+    return f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} bla"
+
 
 
 
@@ -1456,9 +1459,7 @@ async def redis_connection(**kwargs):
         if not kwargs:
             print(f' **REDIS: Error: no kwargs')
             return False
-        # else:
-        #     print(f' **REDIS: kwargs: {kwargs}')
-        
+            
         if not kwargs["db_name"]:
             print(f' **REDIS: Error: no db_name')
             return False
@@ -1472,8 +1473,6 @@ async def redis_connection(**kwargs):
             return False
 
         res_db_list = await r.lrange(kwargs["db_name"], 0, -1)
-
-        # print(f' **REDIS: found {len(res_db_list)} entries!')
         res_db_list = [json.loads(entry) for entry in res_db_list]
         
         if kwargs["select"] == "filter":
@@ -1486,7 +1485,6 @@ async def redis_connection(**kwargs):
                 return False
 
             res_db_list = [entry for entry in res_db_list if entry[kwargs["filter_key"]] == kwargs["filter_val"]]
-            # print(f' **REDIS: filtered: {len(res_db_list)}')
         
         if kwargs["method"] == "get":
             return res_db_list
@@ -1508,11 +1506,9 @@ async def redis_connection(**kwargs):
                 for entry in [json.dumps(entry) for entry in res_db_list]:
                     await r.lrem(kwargs["db_name"], 0, entry)
                     entry = json.loads(entry)
-                    # entry["ts"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     entry["gpu"]["mem"] = f'blablabla + {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
                     await r.rpush(kwargs["db_name"], json.dumps(entry))
                     update_i = update_i + 1
-                # print(f' **REDIS: updated ({update_i}/{len(res_db_list)})!')
                 return res_db_list
             else:
                 print(f' **REDIS: Error: no entry to update for db_name: {kwargs["db_name"]}')
@@ -1525,23 +1521,14 @@ async def redis_connection(**kwargs):
             if not kwargs["data"]["uid"]:
                 print(f' **REDIS: Error: no uid')
                 return False
-            else:
-                print(f' **REDIS: YES GOT DATA UIDS!')
-
                 
-            # print(f' **REDIS: trying to get all uids ...')
             curr_uids = [entry["uid"] for entry in res_db_list]
-            # print(f' **REDIS: found curr_uids: {len(curr_uids)}')
 
             if kwargs["data"]["uid"] in curr_uids:
                 print(f' **REDIS: Error: vllm already saved!')
                 return False
 
-            
             save_data = kwargs["data"]
-            
-            
-            # bbbbb
             data_obj = {
                 "container_name": save_data.get("container_name", "err_container_name"),
                 "uid": save_data.get("uid", "00000000000"),
@@ -1554,7 +1541,6 @@ async def redis_connection(**kwargs):
                 "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }        
             await r.rpush(kwargs["db_name"], json.dumps(data_obj))
-            # print(f' **REDIS: saved!')
             return res_db_list
         
         return False
@@ -1563,98 +1549,165 @@ async def redis_connection(**kwargs):
         print(f' **REDIS: Error: {e}')
         return False
 
+test_call_delete_all = {
+    "db_name": REDIS_DB_VLLM,
+    "method": "del_all",
+    "select": "all"
+}
 
-
-
-
-
-
-
-
-
-# test_call_save_vllm4 = {
-#                 "db_name": REDIS_DB_VLLM,
-#                 "method": "save",
-#                 "select": "all",
-#                 "data": res_vllms[3]
-#             }
-
-# test_call_save_vllm5 = {
-#                 "db_name": REDIS_DB_VLLM,
-#                 "method": "save",
-#                 "select": "all",
-#                 "data": res_vllms[4]
-#             }
-
-test_call_save = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "save",
-                "select": "all",
-                "id": "3",
-                "State": {
-                    "Status": "running"
-                },
-                "ts": "0"
+def fake_redis_api(*req_component,**req_dict):
+    fake_docker_container_list_vllm_running = [
+        {
+            "Name": "vllm1",
+            "Id": "1234567890abcdef",
+            "State": {
+                "Status": "running"
             }
+        },
+        {
+            "Name": "vllm2",
+            "Id": "abcdef1234567890",
+            "State": {
+                "Status": "running"
+            }
+        }
+    ]
+    res_vllms = []
+    for container in fake_docker_container_list_vllm_running:
+        current_vllm = {
+            "container_name": container["Name"],
+            "uid": container["Id"][:12],
+            "status": "running",
+            "State": {
+                "Status": "running"
+            },
+            "gpu": {
+                "mem": "ok%"
+            },
+            "ts": "0"
+        }
+        res_vllms.append(current_vllm)
+    return res_vllms
+
+res_vllms = []
+req_test = {
+    "method": "test"
+}
+res_vllms = fake_redis_api("test", req_dict=req_test)
+
+async def start_shit():
+    print(f'__________________________________ delete ___________________________________')
+    res_1 = await redis_connection(**test_call_delete_all)
+    print(f'________________________________________________________________________')
+    print(f'')
+
+    test_call_save_vllm1 = {
+        "db_name": REDIS_DB_VLLM,
+        "method": "save",
+        "select": "all",
+        "data": res_vllms[0]
+    }
+
+    test_call_save_vllm2 = {
+        "db_name": REDIS_DB_VLLM,
+        "method": "save",
+        "select": "all",
+        "data": res_vllms[1]
+    }
+
+    test_call_save_vllm3 = {
+        "db_name": REDIS_DB_VLLM,
+        "method": "save",
+        "select": "all",
+        "data": res_vllms[0]
+    }
+    
+    print(f'__________________________________ save ___________________________________')
+    print(f'______ calling mit res_vllms[0]: {res_vllms[0]}')
+    res_1 = await redis_connection(**test_call_save_vllm1)
+    print(f'______ calling mit res_vllms[1]: {res_vllms[1]}')
+    res_1 = await redis_connection(**test_call_save_vllm2)
+    print(f'______ calling mit res_vllms[0]: {res_vllms[0]}')
+    res_1 = await redis_connection(**test_call_save_vllm3)
+    print(f'________________________________________________________________________')
+    print(f'')
+
+    return f'started'
+
+async def nur_update(**kwargs):
+    try:
+        print(f' **nur_update: kwargs["db_name"] {kwargs["db_name"]}')
+        res_db_list = await r.lrange(kwargs["db_name"], 0, -1)
+
+        print(f' **nur_update: found {len(res_db_list)} entries!')
+        res_db_list = [json.loads(entry) for entry in res_db_list]
+        print(f' **nur_update: res_db_list {res_db_list}')
+        
+        if kwargs["method"] == "update":
+            if len(res_db_list) > 0:
+                update_i = 0
+                for entry in [json.dumps(entry) for entry in res_db_list]:
+                    await r.lrem(kwargs["db_name"], 0, entry)
+                    entry = json.loads(entry)
+                    entry["gpu"]["mem"] = f'blablabla + {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+                    await r.rpush(kwargs["db_name"], json.dumps(entry))
+                    update_i = update_i + 1
+                return res_db_list
+            else:
+                print(f' **REDIS: Error: no entry to update for db_name: {kwargs["db_name"]}')
+                return False
+        
+        return False
+    
+    except Exception as e:
+        print(f' **REDIS: Error: {e}')
+        return False
+
+REDIS_DB_VLLM = "db_test28"
+test_call_update = {
+    "db_name": REDIS_DB_VLLM,
+    "method": "update",
+    "select": "all",
+    "filter_key": "id",
+    "filter_val": "3",
+}
+
+async def update_vllms_list():
+    res_redis = await nur_update(**test_call_update)
+    return res_redis
+
+req_db = "db_test28"
 
 test_call_get = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "get",
-                "select": "all"
-            }
+    "db_name": req_db,
+    "method": "get",
+    "select": "all"
+}
 
-test_call_update = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "update",
-                "select": "all",
-                "filter_key": "id",
-                "filter_val": "3",
-            }
+async def get_vllm_list():
+    res_redis = await redis_connection(**test_call_get)
+    return res_redis
 
+async def selected_vllm_info(selected_radio):
+    global res_vllms
+    print(f'~~~~~~ [selected_vllm_info] REDIS_DB_VLLM: {REDIS_DB_VLLM}')
+    print(f'~~~~~~ [selected_vllm_info] got selected_radio: {selected_radio}')
 
-test_call_update_gpu = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "update",
-                "select": "all",
-                "filter_key": "id",
-                "filter_val": "3",
-            }
-
-
-
-
-test_call_update_all = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "update",
-                "select": "all"
-            }
+    req_vllm = {
+        "db_name": REDIS_DB_VLLM,
+        "method": "get",
+        "select": "filter",
+        "filter_key": "container_name",
+        "filter_val": selected_radio,
+    }
+    
+    res_vllm = await redis_connection(**req_vllm)
+    print(f'~~~~~~ [selected_vllm_info] got res_vllm: {res_vllm}')
+    print(f'~~~~~~ [selected_vllm_info] got res_vllm[0]: {res_vllm[0]}')
+    
+    return f'{res_vllm}', f'{selected_radio}'
 
 
-
-
-
-
-test_call_save2= {
-                "db_name": REDIS_DB_VLLM,
-                "method": "save",
-                "select": "all",
-                "id": "container_vllm_oai",
-                "State": {
-                    "Status": "running"
-                },
-                "ts": "1"
-            }
-
-
-
-test_call_delete_all = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "del_all",
-                "select": "all"
-            }
-
-# aber muss net weil kannst .get("value"),0) bei return und nur 1 update geht auch wie b ei update fuilter eh
-# status: starting, running, deploying, deleted ..
 
 default_vllm = {
     "container_name": "vllm1",
@@ -1744,125 +1797,6 @@ default_vllm = {
 
 
 
-        
-# print(f'__________________________________ get __________________________________')
-# test_vllms = redis_connection(**test_call_get)
-# print(f'________________________________ test_vllms: {test_vllms}')
-# test_vllms_list_running = [c for c in test_vllms if c["State"]["Status"] == "running"]
-# print(f'________________________________ test_vllms_list_running: {test_vllms_list_running}')
-# print(f'________________________________________________________________________')
-
-# test_vllms2 = get_vllms()
-# print(f'________________________________ test_vllms2: {test_vllms2}')
-# print(f'________________________________________________________________________')
-
-
-print(f'__________________________________ delete ___________________________________')
-redis_connection(**test_call_delete_all)
-print(f'________________________________________________________________________')
-print(f'')
-time.sleep(0.05)
-
-test_call_save_vllm1 = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "save",
-                "select": "all",
-                "data": res_vllms[0]
-            }
-
-test_call_save_vllm2 = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "save",
-                "select": "all",
-                "data": res_vllms[1]
-            }
-
-test_call_save_vllm3 = {
-                "db_name": REDIS_DB_VLLM,
-                "method": "save",
-                "select": "all",
-                "data": res_vllms[0]
-            }
-print(f'__________________________________ save ___________________________________')
-print(f'______ calling mit res_vllms[0]: {res_vllms[0]}')
-redis_connection(**test_call_save_vllm1)
-print(f'______ calling mit res_vllms[1]: {res_vllms[1]}')
-redis_connection(**test_call_save_vllm2)
-print(f'______ calling mit res_vllms[0]: {res_vllms[0]}')
-redis_connection(**test_call_save_vllm3)
-print(f'________________________________________________________________________')
-print(f'')
-time.sleep(0.05)
-
-
-
-
-
-# print(f'_________________________________ update ___________________________________')
-# redis_connection(**test_call_update)
-# print(f'________________________________________________________________________')
-# print(f'')
-# time.sleep(0.05)
-
-
-
-
-def get_vllms_list():
-    res_redis = redis_connection(**test_call_get)
-    return res_redis
-
-def update_vllms_list():
-    res_redis = redis_connection(**test_call_update)
-    return res_redis
-
-    
-# def add_vllm4():
-#     print(f'trying to uadd_vllm4 ...')
-#     res_redis = redis_connection(**test_call_save_vllm4)
-#     print(f'added add_vllm4! {res_redis}')
-#     return res_redis
-
-    
-# def add_vllm5():
-#     print(f'trying to uadd_vllm5 ...')
-#     res_redis = redis_connection(**test_call_save_vllm5)
-#     print(f'added add_vllm5! {res_redis}')
-#     return res_redis
-
-
-
-
-
-
-
-
-
-
-
-def selected_vllm_info(selected_radio):
-    global res_vllms
-    print(f'~~~~~~ [selected_vllm_info] REDIS_DB_VLLM: {REDIS_DB_VLLM}')
-    print(f'~~~~~~ [selected_vllm_info] got selected_radio: {selected_radio}')
-
-    req_vllm = {
-        "db_name": REDIS_DB_VLLM,
-        "method": "get",
-        "select": "filter",
-        "filter_key": "container_name",
-        "filter_val": selected_radio,
-    }
-    print(f'~~~~~~ [selected_vllm_info] got selected_radio: {selected_radio}')
-    
-    
-    res_vllm = redis_connection(**req_vllm)
-    print(f'~~~~~~ [selected_vllm_info] got res_vllm: {res_vllm}')
-    print(f'~~~~~~ [selected_vllm_info] got res_vllm[0]: {res_vllm[0]}')
-    
-
-
-        
-    return f'{res_vllm}', f'{selected_radio}'
-
 
 
 
@@ -1884,14 +1818,6 @@ def toggle_test_vllms_create(vllm_list):
     )
 
 
-
-
-def get_vllm_list():
-    # print(f'trying to get vllm ...')
-    res_redis = redis_connection(**test_call_get)
-    # choices_update = [c["container_name"] for c in res_redis]
-    # print(f'got vllm! {res_redis}')
-    return res_redis
 
 
 
@@ -1925,32 +1851,6 @@ def get_time():
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllms] {e}')
         return f'err {str(e)}'
-
-
-
-
-
-# def get_test_vllms_radio(req_id):
-#     try:
-#         global test_vllms
-        
-#         test_call_get_filter = {
-#                 "db_name": req_db,
-#                 "method": "get",
-#                 "select": "filter",
-#                 "filter_key": "id",
-#                 "filter_val": req_id,
-#         }
-        
-        
-        
-#         test_vllms = redis_connection(**test_call_get_filter)
-#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_test_vllms_radio] req_id: {req_id}')
-#         return test_vllms
-    
-#     except Exception as e:
-#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllms] {e}')
-#         return f'err {str(e)}'
 
 
 
@@ -2392,10 +2292,6 @@ def create_app():
 
 
 
-
-
-        kekw = gr.Textbox(label="kekw")
-
         with gr.Accordion(("System Stats"), open=True) as acc_system_stats:
             
             with gr.Accordion(("GPU information"), open=True) as acc_gpu_dataframe:
@@ -2643,14 +2539,25 @@ def create_app():
 
         
         
-                
+        start_box = gr.Textbox(label="start box")
         vllm_state = gr.State([])
         container_state = gr.State(value=[])
-
-
-        def get_vllm():
+        
+        async def start_shiii():
             try:
-                vllm = get_vllm_list() # 1x docker 1x vllm
+                res_start = await start_shit()
+                if res_start != "started":
+                    return "not started"
+                return res_start
+            except Exception as e:
+                print(f'[start_shiii] Error {e}')
+                return "not started"
+                
+        async def get_vllm():
+            try:
+                vllm = await get_vllm_list()
+                if not vllm:
+                    return []
                 return vllm
             except Exception as e:
                 print(f'[get_vllm] Error {e}')
@@ -2666,6 +2573,7 @@ def create_app():
                 return []
         
         app.load(get_vllm, outputs=[vllm_state])
+        app.load(start_shiii, outputs=start_box)
         app.load(get_container, outputs=[container_state])
         
         txt_lambda_log_helper = gr.Textbox(value="logs", visible=False)
@@ -2930,15 +2838,24 @@ def create_app():
         current_tab = gr.Number(value=0, visible=False)
 
         # bbbbb
+        timer_box = gr.Textbox(label="Timer")
+        vllm_radio_timer = gr.Timer(1, active=True)
+        vllm_radio_timer.tick(
+            update_timer,
+            inputs=None,
+            outputs=[timer_box],
+            show_progress=False
+        )
+        
         radio_state = gr.State("")
-          
         @gr.render(inputs=[vllm_state,radio_state])
         def render_vllm(vllm_list,radio_state_val):
-            
-
-            
             print(f'radio_state_val: {radio_state_val}')
-
+            
+            if not vllm_list:
+                print("No vLLM instances found")
+                return
+                
             with gr.Row():
                 for current_vllm in vllm_list:
                     with gr.Row():
@@ -2946,121 +2863,17 @@ def create_app():
                         print(current_vllm)
                         vllm_selected = gr.Radio([f'{current_vllm["container_name"]}'], value=radio_state_val, interactive=True, label=f'{current_vllm["uid"]} {current_vllm["ts"]} | {current_vllm["gpu"]["mem"]} | {current_vllm["gpu"]["mem"]} ',info=f'{current_vllm["State"]["Status"]} {current_vllm["ts"]}')
 
-                                        
-                        # container_name = gr.Textbox(value=current_vllm["container_name"], interactive=False, elem_classes="table-cell", label="Container Name", info="Container Name")  
-
-                                        
-                        # ts = gr.Textbox(value=current_vllm["ts"], interactive=False, elem_classes="table-cell", label="ts", show_label=False)  
-                        
-
-            
                         vllm_selected.change(
                             selected_vllm_info,
                             [vllm_selected],
                             [selected_vllm_uuid, radio_state]
                         )
-                        
         
         with gr.Accordion(("Selected vLLM Additional Information"), open=True, visible=True) as acc_prompt:
-                                
-
-
             selected_vllm_uuid = gr.Textbox(label="selected_vllm_uuid",value=f'nix bla')
-
-
-            with gr.Accordion(("Model Parameters"), open=False):
-                    with gr.Row():
-                        selected_model_id = gr.Textbox(label="id")
-                        selected_model_container_name = gr.Textbox(label="container_name")
-                        
-                        
-                    with gr.Row():
-                        selected_model_architectures = gr.Textbox(label="architectures")
-                        selected_model_pipeline_tag = gr.Textbox(label="pipeline_tag")
-                        selected_model_transformers = gr.Textbox(label="transformers")
-                        
-                        
-                    with gr.Row():
-                        selected_model_model_type = gr.Textbox(label="model_type")
-                        selected_model_quantization = gr.Textbox(label="quantization")
-                        selected_model_torch_dtype = gr.Textbox(label="torch_dtype")
-                        selected_model_size = gr.Textbox(label="size")
-                        selected_model_hidden_size = gr.Textbox(label="hidden_size", visible=False)
-
-                    with gr.Row():
-                        selected_model_private = gr.Textbox(label="private")
-                        selected_model_gated = gr.Textbox(label="gated")
-                        selected_model_downloads = gr.Textbox(label="downloads")
-                                          
-                        
-                        
-                    
-                    with gr.Accordion(("Model Configs"), open=False):
-                        with gr.Row():
-                            selected_model_search_data = gr.Textbox(label="search_data", lines=20, elem_classes="table-cell")
-                        with gr.Row():
-                            selected_model_hf_data = gr.Textbox(label="hf_data", lines=20, elem_classes="table-cell")
-                        with gr.Row():
-                            selected_model_config_data = gr.Textbox(label="config_data", lines=20, elem_classes="table-cell")
-                        
         
-
-
-            with gr.Accordion(("Prompt Parameters"), open=False, visible=True) as acc_prompt:
-
-                vllmcontainer=gr.Radio(["container_vllm_xoo", "container_vllm_oai", "Create New"], value="container_vllm_oai", show_label=False, info="Select a vllms_prompt or create a new one. Where?"),
-                port=gr.Slider(1370, 1380, step=1, value=1371, label="port", info=f"Choose a port."),
-                prompt = gr.Textbox(placeholder=f'{PROMPT}', value=f'{PROMPT}', label="Prompt", show_label=True, visible=True),
-                top_p=gr.Slider(0.01, 1.0, step=0.01, value=0.95, label="top_p", info=f'Float that controls the cumulative probability of the top tokens to consider'),
-                temperature=gr.Slider(0.0, 0.99, step=0.01, value=0.8, label="temperature", info=f'Float that controls the randomness of the sampling. Lower values make the model more deterministic, while higher values make the model more random. Zero means greedy sampling'),
-                max_tokens=gr.Slider(50, 2500, step=25, value=150, label="max_tokens", info=f'Maximum number of tokens to generate per output sequence')
-
-            with gr.Accordion(("Load vLLM Parameters"), open=False, visible=True) as acc_load:
-                    method=gr.Textbox(value="load", label="method", info=f"yee the req_method."),
-                    vllmcontainer=gr.Textbox(value="container_vllm_xoo", label="vllmcontainer", info=f"Select a container name which is running vLLM"),
-                    # vllmcontainer=gr.Radio(["container_vllm_xoo", "container_vllm_oai", "Create New"], value="container_vllm_xoo", show_label=False, info="Select a vllms_prompt or create a new one. Where?"),
-                    port=gr.Slider(1370, 1380, step=1, value=1370, label="port", info=f"Choose a port."),
-                    image=gr.Textbox(value="xoo4foo/zzvllm46:latest", label="image", info=f"Dockerhub vLLM image"),
-                                                                    
-                    max_model_len=gr.Slider(1024, 8192, step=1024, value=1024, label="max_model_len", info=f"Model context length. If unspecified, will be automatically derived from the model config."),
-                    tensor_parallel_size=gr.Number(1, 8, value=1, label="tensor_parallel_size", info=f"Number of tensor parallel replicas."),
-                    gpu_memory_utilization=gr.Slider(0.2, 0.99, value=0.87, label="gpu_memory_utilization", info=f"The fraction of GPU memory to be used for the model executor, which can range from 0 to 1.")
-    
-
-            
-            
-            with gr.Accordion(("Create vLLM Parameters"), open=False, visible=True) as acc_create:
-                method=gr.Textbox(value="create", label="method", info=f"yee the req_method."),
-                
-                image=gr.Textbox(value="xoo4foo/zzvllm46:latest", label="image", info=f"Dockerhub vLLM image"),
-                runtime=gr.Textbox(value="nvidia", label="runtime", info=f"Container runtime"),
-                shm_size=gr.Slider(1, 320, step=1, value=8, label="shm_size", info=f'Maximal GPU Memory in GB'),
-                
-                port=gr.Slider(1370, 1380, step=1, value=1370, label="port", info=f"Choose a port."),                        
-                
-                max_model_len=gr.Slider(1024, 8192, step=1024, value=1024, label="max_model_len", info=f"Model context length. If unspecified, will be automatically derived from the model config."),
-                tensor_parallel_size=gr.Number(1, 8, value=1, label="tensor_parallel_size", info=f"Number of tensor parallel replicas."),
-                gpu_memory_utilization=gr.Slider(0.2, 0.99, value=0.87, label="gpu_memory_utilization", info=f"The fraction of GPU memory to be used for the model executor, which can range from 0 to 1.")
-
-    
-        
-        # btn_add_vllm4 = gr.Button("add vllm4")
-        # btn_add_vllm4.click(
-        #     add_vllm4,
-        #     None,
-        #     [container_state]
-        # )
-        
-        # btn_add_vllm5 = gr.Button("add vllm5")
-        # btn_add_vllm5.click(
-        #     add_vllm5,
-        #     None,
-        #     [container_state]
-        # )
-        
-        
-        vllm_radio_timer = gr.Timer(5,active=True)
-        vllm_radio_timer.tick(
+        vllm_radio_timer2 = gr.Timer(5,active=True)
+        vllm_radio_timer2.tick(
             update_vllms_list,
             None,
             [vllm_state],
@@ -3089,6 +2902,10 @@ def create_app():
 
 
 
+
+
+
+        kekw = gr.Textbox(label="kekw")
 
         kekt = gr.Textbox(label="kekt")
         
