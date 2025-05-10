@@ -406,12 +406,23 @@ async def update_gpu():
             data_gpu = get_gpu_info()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu[0]["mem_util"]: {data_gpu[0]["mem_util"]} !!!!!!!!!!!!!!!!!!!!!')
-            # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
-            test_gpuuid = {
-                "GPU-dc9759b2-85a9-d448-1469-fa19388356af": f'{data_gpu[0]["mem_util"]}'
-            }
+            res_gpu_arr = []
+            curr_gpu_i = 0
+            for a_gpu in data_gpu:
+                print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! a_gpu: {a_gpu} !!!!!!!!!!!!!!!!!!!!!')
+                # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
+                current_gpu_obj = {
+                    f'id': f'{curr_gpu_i}',
+                    f'{data_gpu["current_uuid"]}': f'{data_gpu[0]["mem_util"]}',
+                    f'ts': f'{{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}'
+                }
+                res_gpu_arr.append(current_gpu_obj)
+                print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! added: {curr_gpu_i} !!!!!!!!!!!!!!!!!!!!!')
+                curr_gpu_i = curr_gpu_i + 1
+                
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! finished! responding with {len(res_gpu_arr)} gpus ... !!!!!!!!!!!!!!!!!!!!!')
             pipe.set('gpu_key', json.dumps(data_gpu))
-            pipe.set('asdf', json.dumps(test_gpuuid))
+            pipe.set('asdf', json.dumps(res_gpu_arr))
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             await pipe.execute()
             print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
