@@ -1304,6 +1304,12 @@ def gr_load_check(selected_model_id, selected_model_architectures, selected_mode
 
 
 
+def toggle_load_create(choice):
+    
+    if choice == 'load':
+        return [gr.update(visible=True), gr.update(visible=False)]
+    
+    return [gr.update(visible=False), gr.update(visible=True)]
 
 
 
@@ -2389,8 +2395,11 @@ def create_app():
                     with gr.Column(scale=1):                
                         with gr.Row(visible=True) as row_btn_download:
                             btn_dl = gr.Button("DOWNLOAD", variant="primary")
-
-            with gr.TabItem("Load", id=1):
+            with gr.TabItem("Load or Create", id=1):
+                
+                radio_load=gr.Radio(["load", "create"], value="load", label="Select if Load or Create", info="You can either hcoose running xxaooo vllm models or create a openai or any customdocker hub vllm")
+                
+                
                 with gr.Row(visible=True) as row_vllm_load:
                     with gr.Column(scale=4):
                         with gr.Accordion(("Load vLLM Parameters"), open=True, visible=True) as acc_load:
@@ -2411,7 +2420,7 @@ def create_app():
                         with gr.Row(visible=True) as vllm_load_actions:
                             btn_load = gr.Button("DEPLOY")
 
-            with gr.TabItem("Create", id=2):
+
                 with gr.Row(visible=True) as row_vllm_create:
                     with gr.Column(scale=4):                         
                         with gr.Accordion(("Create vLLM Parameters"), open=True, visible=True) as acc_create:
@@ -2436,7 +2445,7 @@ def create_app():
                             btn_create_close = gr.Button("CANCEL")
 
 
-            with gr.TabItem("Prompt", id=3):
+            with gr.TabItem("Prompt", id=2):
                 with gr.Row(visible=True) as row_vllm_prompt:
                     with gr.Column(scale=2):
                         with gr.Accordion(("Prompt Parameters"), open=True, visible=True) as acc_prompt:
@@ -2955,11 +2964,13 @@ def create_app():
             current_tab,
             tabs
         )
-        
-        
-        
-        
-        
+
+
+        radio_load.change(
+            toggle_load_create,
+            radio_load,
+            [row_vllm_load, row_vllm_create]
+        )
         
         
         
