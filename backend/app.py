@@ -408,7 +408,7 @@ async def update_gpu():
                 current_gpu_obj = {
                     f'id': f'{curr_gpu_i}',
                     f'{a_gpu["current_uuid"]}': f'{a_gpu["mem_util"]}',
-                    f'ts': f'{{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}'
+                    f'ts': f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
                 }
                 res_gpu_arr.append(current_gpu_obj)
                 print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! added: {curr_gpu_i} !!!!!!!!!!!!!!!!!!!!!')
