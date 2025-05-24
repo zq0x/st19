@@ -51,6 +51,9 @@ def wait_for_backend(backend_url, timeout=300):
     return False
 
 
+
+VLLMS = []
+
 test_vllms = []
 test_vllms_list_running = []
 
@@ -691,6 +694,7 @@ disk_to_pd2()
 
 async def vllm_to_pd2():
 
+    global VLLMS
     rows = []
 
     try:
@@ -731,7 +735,7 @@ async def vllm_to_pd2():
         # print(f'?????@@@222???????????????????????????????????@@@')
         # print(f'??????????222???????????????????????????????????@@')
         df = pd.DataFrame(rows)
-        
+        VLLMS = rows.copy()
         # print(f'?????@222????????????????????????????????????????@')
         # print(f'?????@222????????????????????????????????????????')
         # print(f'df: {df}')
@@ -2516,6 +2520,11 @@ def create_app():
                 
         async def get_vllm():
             try:
+                # vllm = await get_vllm_list()
+                vllm_data = await r.get('vllm_key')
+                vllm_data_json = json.loads(vllm_data) if vllm_data else None
+                
+                
                 vllm = await get_vllm_list()
                 if not vllm:
                     return []
@@ -2798,6 +2807,9 @@ def create_app():
         vllms=gr.Radio(["vLLM1", "vLLM2", "Create New"], value="vLLM1", show_label=False, info="Select a vLLM or create a new one. Where?")
         current_tab = gr.Number(value=0, visible=False)
 
+
+
+        global VLLMS
         # bbbbb
         timer_box = gr.Textbox(label="Timer")
         vllm_radio_timer = gr.Timer(1, active=True)
@@ -2822,7 +2834,7 @@ def create_app():
                     with gr.Row():
                         print(f'current_vllm')
                         print(current_vllm)
-                        vllm_selected = gr.Radio([f'{current_vllm["container_name"]}'], value=radio_state_val, interactive=True, label=f'{current_vllm["uid"]} {current_vllm["ts"]} | {current_vllm["gpu"]["mem"]} | {current_vllm["gpu"]["mem"]} ',info=f'{current_vllm["State"]["Status"]} {current_vllm["ts"]}')
+                        vllm_selected = gr.Radio([f'{current_vllm["name"]}'], value=radio_state_val, interactive=True, label=f'{current_vllm["ts"]} | {current_vllm["gpu"]} | {current_vllm["mem"]} ',info=f'{current_vllm["status"]}')
 
                         vllm_selected.change(
                             selected_vllm_info,
