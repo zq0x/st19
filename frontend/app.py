@@ -2520,15 +2520,16 @@ def create_app():
                 
         async def get_vllm():
             try:
-                # vllm = await get_vllm_list()
                 vllm_data = await r.get('vllm_key')
                 vllm_data_json = json.loads(vllm_data) if vllm_data else None
-                
-                
-                vllm = await get_vllm_list()
-                if not vllm:
+                if not vllm_data_json:
                     return []
-                return vllm
+                return vllm_data_json                
+                
+                # vllm = await get_vllm_list()
+                # if not vllm:
+                #     return []
+                # return vllm
             except Exception as e:
                 print(f'[get_vllm] Error {e}')
                 return []
