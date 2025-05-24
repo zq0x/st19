@@ -15,6 +15,7 @@ import logging
 # import redis
 import redis.asyncio as redis
 
+GPU_LIST = []
 
 print(f'** connecting to redis on port: {os.getenv("REDIS_PORT")} ... ')
 # r = redis.Redis(host="redis", port=int(os.getenv("REDIS_PORT", 6379)), db=0)
@@ -100,6 +101,8 @@ with open(DEFAULTS_PATH, "r", encoding="utf-8") as f:
 def get_vllm_info():
     print(f'????????????????????? get_vllm_info START')
     try:
+        global GPU_LIST
+        print(f'????????????????????? GPU_LIST: ${GPU_LIST}')
         vllm_info = []
         res_container_list = client.containers.list(all=True)
         res_container_list_attrs = [container.attrs for container in res_container_list]
@@ -108,7 +111,8 @@ def get_vllm_info():
             print(f'????????????????????? {c["Name"]}')
             vllm_info.append({
                 "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
-                "name": c.get("Name", "nadaname")
+                "name": c.get("Name", "nadaname"),
+                "gpu": [0,1]
             })
         return vllm_info
     except Exception as e:
@@ -174,9 +178,10 @@ def get_disk_info():
 
 def get_gpu_info():
     try:
-
+        global GPU_LIST
         device_count = pynvml.nvmlDeviceGetCount()
         gpu_info = []
+        global_gpu_list = []
         for i in range(0,device_count):
             current_gpu_info = {}
             current_gpu_info['res_gpu_i'] = str(i)           
@@ -230,6 +235,7 @@ def get_gpu_info():
                 
                 res_mem_util = (float(mem_info.used / 1024**2)/float(mem_info.total / 1024**2)) * 100
                 current_gpu_info['res_mem_util'] = f'{"{:.2f}".format(res_mem_util)}% ({res_mem_used}/{res_mem_total})'
+                current_gpu_info['res_mem_util_perc'] = f'{"{:.2f}".format(res_mem_util)}%'
 
             except Exception as e:
                 print(f'2 gpu_info {e}')
@@ -343,8 +349,17 @@ def get_gpu_info():
                 "supported": current_gpu_info.get("res_supported", "0"),
                 "not_supported": current_gpu_info.get("res_not_supported", "0"),
                 "not_supported": current_gpu_info.get("res_not_supported", "0")
+            })            
+            global_gpu_list.append({
+                "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
+                "i": current_gpu_info.get("res_gpu_i", "0"),
+                "name": current_gpu_info.get("res_name", "0"),
+                "uuid": current_gpu_info.get("res_uuid", "0"),
+                "gpu": current_gpu_info.get("res_gpu_util", "0"),
+                "mem": current_gpu_info.get("res_mem_util_perc", "0"),
+                "temp": current_gpu_info.get("res_temperature", "0")
             })
-                        
+        GPU_LIST = global_gpu_list
         return gpu_info
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
@@ -377,16 +392,16 @@ async def update_vllm():
 async def update_disk():
     while True:
         try:
-            print(f'==================!!!!!! updating ==================')
+            # print(f'==================!!!!!! updating ==================')
             data_disk = get_disk_info()
-            print(f'==================!!!!!! data_disk: {data_disk} ==================')
+            # print(f'==================!!!!!! data_disk: {data_disk} ==================')
             pipe.set('disk_key', json.dumps(data_disk))
             await pipe.execute()
-            print(f'==================!!!!!! done ==================')
-            print(f'==================!!!!!! getting ==================')
+            # print(f'==================!!!!!! done ==================')
+            # print(f'==================!!!!!! getting ==================')
             res_disk = await r.get('disk_key')
-            print(f'==================!!!!!! res_disk ==================')
-            print(f'==================!!!!!! {res_disk} ==================')
+            # print(f'==================!!!!!! res_disk ==================')
+            # print(f'==================!!!!!! {res_disk} ==================')
             await asyncio.sleep(0.1)
         except Exception as e: 
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
@@ -398,12 +413,12 @@ async def update_gpu():
         try:
             # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! updating !!!!!!!!!!!!!!!!!!!!!')
             data_gpu = get_gpu_info()
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu[0]["mem_util"]: {data_gpu[0]["mem_util"]} !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu[0]["mem_util"]: {data_gpu[0]["mem_util"]} !!!!!!!!!!!!!!!!!!!!!')
             res_gpu_arr = []
             curr_gpu_i = 0
             for a_gpu in data_gpu:
-                print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! a_gpu: {a_gpu} !!!!!!!!!!!!!!!!!!!!!')
+                # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! a_gpu: {a_gpu} !!!!!!!!!!!!!!!!!!!!!')
                 # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
                 current_gpu_obj = {
                     f'id': f'{curr_gpu_i}',
@@ -411,20 +426,20 @@ async def update_gpu():
                     f'ts': f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
                 }
                 res_gpu_arr.append(current_gpu_obj)
-                print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! added: {curr_gpu_i} !!!!!!!!!!!!!!!!!!!!!')
+                # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! added: {curr_gpu_i} !!!!!!!!!!!!!!!!!!!!!')
                 curr_gpu_i = curr_gpu_i + 1
                 
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! finished! responding with {len(res_gpu_arr)} gpus ... !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! finished! responding with {len(res_gpu_arr)} gpus ... !!!!!!!!!!!!!!!!!!!!!')
             pipe.set('gpu_key', json.dumps(data_gpu))
             pipe.set('asdf', json.dumps(res_gpu_arr))
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             await pipe.execute()
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! getting !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! getting !!!!!!!!!!!!!!!!!!!!!')
             res_gpu = await r.get('gpu_key')
             
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
-            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
+            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
             await asyncio.sleep(0.1)
         except Exception as e: 
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
