@@ -84,60 +84,6 @@ error_vllm = {
     "ts": "0"
 }
 
-error_vllm2 = {
-    "container_name": "error2",
-    "uid": "1111111111111",
-    "status": "offline",
-    "State": {
-        "Status": "offline"
-    },
-    "gpu": {
-        "mem": "nuh uh 1%"
-    },
-    "ts": "0"
-}
-
-
-error_vllm3 = {
-    "container_name": "error3",
-    "uid": "222222222222",
-    "status": "offline",
-    "State": {
-        "Status": "offline"
-    },
-    "gpu": {
-        "mem": "nuh uh 2%"
-    },
-    "ts": "0"
-}
-
-
-error_vllm4 = {
-    "container_name": "error4",
-    "uid": "3333333333",
-    "status": "offline",
-    "State": {
-        "Status": "offline"
-    },
-    "gpu": {
-        "mem": "nuh uh 3%"
-    },
-    "ts": "0"
-}
-
-
-error_vllm5 = {
-    "container_name": "error5",
-    "uid": "4444444444",
-    "status": "offline",
-    "State": {
-        "Status": "offline"
-    },
-    "gpu": {
-        "mem": "nuh uh 4%"
-    },
-    "ts": "0"
-}
 
 
 def redis_api(*req_component,**req_dict):
@@ -769,13 +715,15 @@ async def vllm_to_pd2():
             # print(disk_info)
             # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
 
-            
-            
+
             rows.append({
                 "ts": entry.get("ts", "0"),
                 "name": entry.get("name", "0"),
+                "status": entry.get("status", "0"),
+                "gpu_list": entry.get("gpu_list", "0"),
+                "mem": entry.get("mem", "0"),
                 "gpu": entry.get("gpu", "0"),
-                "perc": entry.get("perc", "0")
+                "temp": entry.get("temp", "0")
             })
         # print(f'?????2222????????????????????????????????????????@@')
         # print(f'?????@222????????????????????????????????????????@')
