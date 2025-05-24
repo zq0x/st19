@@ -110,11 +110,12 @@ def get_vllm_info():
         for c in res_container_list_attrs:
             # print(f'????????????????????? {c}')
             print(f'????????????????????? {c["Name"]}')
-            print(f'????????????????????? {c["State"]["Status"]}')
+            c_status = f'{c["State"]["Status"] if "State" in c and "Status" in c["State"] else "No status"}'
+            print(f'????????????????????? {c_status}')
             vllm_info.append({
                 "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
                 "name": c.get("Name", "nadaname"),
-                "status": f'{c["State"]["Status"] if "State" in c and "Status" in c["State"] else "No status"}',
+                "status": c_status,
                 "gpu_list": [0,1],
                 "mem": f'{GPU_LIST[0]["mem"]} | {GPU_LIST[0]["mem"]}',
                 "gpu": f'{GPU_LIST[0]["gpu"]}',

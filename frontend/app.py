@@ -2835,7 +2835,7 @@ def create_app():
                     with gr.Row():
                         print(f'current_vllm')
                         print(current_vllm)
-                        vllm_selected = gr.Radio([f'{current_vllm["name"]}'], value=radio_state_val, interactive=True, label=f'{current_vllm["ts"]} | {current_vllm["gpu"]} | {current_vllm["mem"]} ',info=f'{current_vllm["status"]}')
+                        vllm_selected = gr.Radio([f'{current_vllm["container_name"]}'], value=radio_state_val, interactive=True, label=f'{current_vllm["uid"]} {current_vllm["ts"]} | {current_vllm["mem"]} | {current_vllm["gpu"]} ',info=f'{current_vllm["status"]} {current_vllm["ts"]}')
 
                         vllm_selected.change(
                             selected_vllm_info,
