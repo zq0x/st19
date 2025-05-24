@@ -417,9 +417,9 @@ def docker_api(req_method,req_var):
 # gpu_to_pd()
 
 async def asdf():
-    print(f'######### ASDF #########')
+    # print(f'######### ASDF #########')
     res_asdf = await r.get('asdf')
-    print(f'######### ASDF res -> {res_asdf} #########')
+    # print(f'######### ASDF res -> {res_asdf} #########')
     return res_asdf
 async def gpu_to_pd2():
     global MEM_TOTAL
@@ -1598,12 +1598,12 @@ async def start_shit():
 
 async def nur_update(**kwargs):
     try:
-        print(f' **nur_update: kwargs["db_name"] {kwargs["db_name"]}')
+        # print(f' **nur_update: kwargs["db_name"] {kwargs["db_name"]}')
         res_db_list = await r.lrange(kwargs["db_name"], 0, -1)
 
-        print(f' **nur_update: found {len(res_db_list)} entries!')
+        # print(f' **nur_update: found {len(res_db_list)} entries!')
         res_db_list = [json.loads(entry) for entry in res_db_list]
-        print(f' **nur_update: res_db_list {res_db_list}')
+        # print(f' **nur_update: res_db_list {res_db_list}')
         
         if kwargs["method"] == "update":
             if len(res_db_list) > 0:
@@ -2812,14 +2812,14 @@ def create_app():
 
         global VLLMS
         # bbbbb
-        timer_box = gr.Textbox(label="Timer")
-        vllm_radio_timer = gr.Timer(1, active=True)
-        vllm_radio_timer.tick(
-            update_timer,
-            inputs=None,
-            outputs=[timer_box],
-            show_progress=False
-        )
+        # timer_box = gr.Textbox(label="Timer")
+        # vllm_radio_timer = gr.Timer(1, active=True)
+        # vllm_radio_timer.tick(
+        #     update_timer,
+        #     inputs=None,
+        #     outputs=[timer_box],
+        #     show_progress=False
+        # )
         
         radio_state = gr.State("")
         @gr.render(inputs=[vllm_state,radio_state])
@@ -2846,13 +2846,14 @@ def create_app():
         with gr.Accordion(("Selected vLLM Additional Information"), open=True, visible=True) as acc_prompt:
             selected_vllm_uuid = gr.Textbox(label="selected_vllm_uuid",value=f'nix bla')
         
-        vllm_radio_timer2 = gr.Timer(5,active=True)
-        vllm_radio_timer2.tick(
-            update_vllms_list,
-            None,
-            [vllm_state],
-            show_progress=False
-        )
+        #ffffff
+        # vllm_radio_timer2 = gr.Timer(5,active=True)
+        # vllm_radio_timer2.tick(
+        #     update_vllms_list,
+        #     None,
+        #     [vllm_state],
+        #     show_progress=False
+        # )
         
         
         
