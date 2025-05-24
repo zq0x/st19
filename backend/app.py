@@ -102,7 +102,8 @@ def get_vllm_info():
     print(f'????????????????????? get_vllm_info START')
     try:
         global GPU_LIST
-        print(f'????????????????????? GPU_LIST: ${GPU_LIST}')
+        print(f'????????????????????? GPU_LIST: {GPU_LIST}')
+        print(f'????????????????????? GPU_LIST[0]["mem"]: {GPU_LIST[0]["mem"]}')
         vllm_info = []
         res_container_list = client.containers.list(all=True)
         res_container_list_attrs = [container.attrs for container in res_container_list]
@@ -112,7 +113,8 @@ def get_vllm_info():
             vllm_info.append({
                 "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
                 "name": c.get("Name", "nadaname"),
-                "gpu": [0,1]
+                "gpu": [0,1],
+                "perc": f'{GPU_LIST[0]["mem"]}'
             })
         return vllm_info
     except Exception as e:
