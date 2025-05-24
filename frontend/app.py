@@ -2835,7 +2835,10 @@ def create_app():
                     with gr.Row():
                         print(f'current_vllm')
                         print(current_vllm)
-                        vllm_selected = gr.Radio([f'{current_vllm["container_name"]} {current_vllm["gpu"]} {current_vllm["mem"]} {current_vllm["ts"]} '])
+                        
+
+                        vllm_selected = gr.Radio([f'{current_vllm["container_name"]}'], value=radio_state_val, interactive=True, label=f' {current_vllm["ts"]} | {current_vllm["mem"]} | {current_vllm["gpu"]}',info=f'{current_vllm["status"]} {current_vllm["ts"]}')
+
 
                         vllm_selected.change(
                             selected_vllm_info,
@@ -2847,13 +2850,13 @@ def create_app():
             selected_vllm_uuid = gr.Textbox(label="selected_vllm_uuid",value=f'nix bla')
         
         #ffffff
-        # vllm_radio_timer2 = gr.Timer(5,active=True)
-        # vllm_radio_timer2.tick(
-        #     update_vllms_list,
-        #     None,
-        #     [vllm_state],
-        #     show_progress=False
-        # )
+        vllm_radio_timer2 = gr.Timer(5,active=True)
+        vllm_radio_timer2.tick(
+            get_vllm,
+            None,
+            [vllm_state],
+            show_progress=False
+        )
         
         
         
